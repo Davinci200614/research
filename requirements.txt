@@ -1,0 +1,9 @@
+selenium
+undetected-chromedriver
+webdriver-manager
+SpeechRecognition
+pydub
+requests
+imageio-ffmpeg
+PyAudio
+openai
