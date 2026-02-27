@@ -138,8 +138,6 @@ def search_artist(driver, artist_name):
     artist_link = driver.find_element(By.XPATH, "//*[@id='root']/div[2]/div/div[1]/div[3]/div/div/div[1]/div[2]/a[1]/div/div[1]/img")
        
     if artist_link:
-        href = artist_link.get_attribute("href")
-        print(f"   Found artist link: {href}")
         artist_link.click()
         time.sleep(5)
 
@@ -423,8 +421,8 @@ def update_row(row, headers, data, er=None):
 
     # Update tour link column
     tour_link = data.get("tour_link")
-    if tour_link and "Link to Tour(artist website)" in headers:
-        tour_idx = headers.index("Link to Tour(artist website)")
+    if tour_link and "Link to Tour" in headers:
+        tour_idx = headers.index("Link to Tour")
         while len(row) <= tour_idx:
             row.append("")
         row[tour_idx] = tour_link
@@ -455,7 +453,7 @@ def main():
     artist_col = headers.index("Artist Name")
 
     # ── Team Member validation ──
-    VALID_MEMBERS = ["ilias", "Omar", "Judee"]
+    VALID_MEMBERS = ["ilias", "Omar", "Judee", "ibrahim"]
     team_col = headers.index("Team Member") if "Team Member" in headers else None
 
     # Columns to check for existing data
@@ -547,7 +545,7 @@ def main():
                 time.sleep(2)
 
         # Step 3: Get tour links via OpenAI web search (no browser needed)
-        tour_col = "Link to Tour(artist website)"
+        tour_col = "Link to Tour"
         if tour_col in headers:
             tour_idx = headers.index(tour_col)
             tour_artists = [
