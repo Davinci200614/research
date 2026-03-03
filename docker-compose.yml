@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  research-api:
+    build: .
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      - HEADLESS=true
+      - API_HOST=0.0.0.0
+    # Chrome needs extra shared memory
+    shm_size: "2g"
+    restart: unless-stopped

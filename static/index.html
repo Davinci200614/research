@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artist Research</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0f1117;
+      --surface:  #1a1d27;
+      --border:   #2a2d3a;
+      --text:     #e4e4e7;
+      --muted:    #8b8d97;
+      --accent:   #6366f1;
+      --accent-h: #818cf8;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --amber:    #f59e0b;
+      --radius:   10px;
+    }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .wrapper { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem; }
+    header { text-align: center; margin-bottom: 2.5rem; }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
+    header h1 span { color: var(--accent-h); }
+    header p { color: var(--muted); font-size: .92rem; margin-top: .35rem; }
+
+    /* ── Card ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .card h2 { font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem; }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    textarea {
+      width: 100%; min-height: 100px; resize: vertical;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: .75rem; font-size: .9rem; font-family: inherit;
+      transition: border-color .2s;
+    }
+    textarea:focus { outline: none; border-color: var(--accent); }
+    textarea::placeholder { color: var(--muted); }
+
+    .options { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .options label {
+      display: flex; align-items: center; gap: .4rem;
+      font-size: .88rem; color: var(--muted); cursor: pointer;
+      user-select: none;
+    }
+    .options input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 16px; height: 16px;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .45rem;
+      margin-top: 1.25rem;
+      padding: .65rem 1.5rem;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: .92rem; font-weight: 600;
+      cursor: pointer; transition: background .2s;
+    }
+    .btn:hover { background: var(--accent-h); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn svg { width: 18px; height: 18px; }
+
+    /* ── Status bar ───────────────────────────────────────────── */
+    #status-bar {
+      display: none; align-items: center; gap: .6rem;
+      margin-top: 1rem; font-size: .88rem; color: var(--muted);
+    }
+    #status-bar.visible { display: flex; }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-bar-track {
+      flex: 1; height: 6px;
+      background: var(--border); border-radius: 3px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%;
+      background: var(--accent);
+      border-radius: 3px;
+      transition: width .4s ease;
+    }
+
+    /* ── Badge ────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      padding: .15rem .55rem; border-radius: 999px;
+      font-size: .75rem; font-weight: 600; text-transform: uppercase;
+    }
+    .badge-queued   { background: #2a2d3a; color: var(--muted); }
+    .badge-running  { background: rgba(99,102,241,.15); color: var(--accent-h); }
+    .badge-completed{ background: rgba(34,197,94,.12);  color: var(--green); }
+    .badge-failed   { background: rgba(239,68,68,.12);  color: var(--red); }
+
+    /* ── Jobs list ────────────────────────────────────────────── */
+    #jobs-section { display: none; }
+    #jobs-section.visible { display: block; }
+    .jobs-header { display: flex; justify-content: space-between; align-items: center; }
+    .jobs-header button {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); font-size: .8rem; padding: .3rem .7rem;
+      cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .jobs-header button:hover { border-color: var(--accent); color: var(--text); }
+
+    .job-item {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 1rem 1.25rem; margin-top: .75rem; cursor: pointer;
+      transition: border-color .2s;
+    }
+    .job-item:hover { border-color: var(--accent); }
+    .job-top { display: flex; justify-content: space-between; align-items: center; }
+    .job-id { font-family: 'Cascadia Code', monospace; font-size: .85rem; }
+    .job-meta { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+
+    /* ── Results table ────────────────────────────────────────── */
+    #results-section { display: none; }
+    #results-section.visible { display: block; }
+    .results-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .results-top button {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); font-size: .8rem; padding: .3rem .7rem;
+      cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .results-top button:hover { border-color: var(--accent); color: var(--text); }
+
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th, td {
+      text-align: left; padding: .6rem .75rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    th { color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+    td { color: var(--text); }
+    td a { color: var(--accent-h); text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+    tr:last-child td { border-bottom: none; }
+
+    .error-msg {
+      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
+      border-radius: 8px; padding: .75rem 1rem; color: var(--red);
+      font-size: .88rem; margin-top: .75rem;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .wrapper { padding: 1.25rem 1rem; }
+      .options { flex-direction: column; gap: .75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <header>
+      <h1><span>&#9835;</span> Artist Research</h1>
+      <p>Search artists on Soundcharts &middot; Engagement rates &middot; Tour links &middot; Venue types</p>
+    </header>
+
+    <!-- ── Input form ────────────────────────────────────────── -->
+    <div class="card" id="form-card">
+      <h2>New Research Job</h2>
+      <textarea id="artists-input" placeholder="Enter artist names, one per line&#10;e.g.&#10;Bruno Mars&#10;Charlie Wilson&#10;Adele"></textarea>
+      <div class="options">
+        <label><input type="checkbox" id="opt-engagement" checked /> IG Engagement Rate</label>
+        <label><input type="checkbox" id="opt-tour" checked /> Tour Link</label>
+        <label><input type="checkbox" id="opt-venue" checked /> Venue Type</label>
+      </div>
+      <button class="btn" id="start-btn" onclick="startJob()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Start Research
+      </button>
+      <div id="status-bar">
+        <div class="spinner"></div>
+        <span id="status-text">Starting…</span>
+        <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <span id="progress-pct">0%</span>
+      </div>
+    </div>
+
+    <!-- ── Jobs list ─────────────────────────────────────────── -->
+    <div class="card" id="jobs-section">
+      <div class="jobs-header">
+        <h2>Jobs</h2>
+        <button onclick="refreshJobs()">Refresh</button>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+
+    <!-- ── Results ───────────────────────────────────────────── -->
+    <div class="card" id="results-section">
+      <div class="results-top">
+        <h2 id="results-title">Results</h2>
+        <div>
+          <button onclick="exportCSV()">Export CSV</button>
+          <button onclick="closeResults()">Close</button>
+        </div>
+      </div>
+      <div id="results-body"></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/v1';
+    let activePolling = null;    // interval id
+    let activeJobId   = null;
+
+    // ── Start job ────────────────────────────────────────────
+    async function startJob() {
+      const raw = document.getElementById('artists-input').value.trim();
+      if (!raw) return;
+      const artists = raw.split('\n').map(s => s.trim()).filter(Boolean);
+      if (!artists.length) return;
+
+      const body = {
+        artists,
+        include_engagement: document.getElementById('opt-engagement').checked,
+        include_tour_link:  document.getElementById('opt-tour').checked,
+        include_venue_type: document.getElementById('opt-venue').checked,
+      };
+
+      const btn = document.getElementById('start-btn');
+      btn.disabled = true;
+      showStatus('Submitting…', 0);
+
+      try {
+        const res = await fetch(`${API}/scrape`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        activeJobId = data.job_id;
+        showStatus(`Job ${data.job_id} queued — polling…`, 0);
+        startPolling(data.job_id);
+        refreshJobs();
+      } catch (e) {
+        showStatus(`Error: ${e.message}`, 0);
+        btn.disabled = false;
+      }
+    }
+
+    // ── Poll job ─────────────────────────────────────────────
+    function startPolling(jobId) {
+      if (activePolling) clearInterval(activePolling);
+      activePolling = setInterval(() => pollJob(jobId), 2000);
+    }
+
+    async function pollJob(jobId) {
+      try {
+        const res = await fetch(`${API}/jobs/${jobId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const job = await res.json();
+        const p = job.progress;
+        const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
+
+        if (job.status === 'running') {
+          const step = p.current_step ? ` (${p.current_step})` : '';
+          showStatus(
+            `Researching ${p.current_artist || '…'}${step}  —  ${p.completed_artists}/${p.total_artists}`,
+            pct
+          );
+        } else if (job.status === 'completed') {
+          stopPolling();
+          showStatus(`Done — ${p.completed_artists} artist(s) researched`, 100);
+          document.getElementById('start-btn').disabled = false;
+          showResults(job);
+          refreshJobs();
+        } else if (job.status === 'failed') {
+          stopPolling();
+          showStatus(`Failed: ${job.error || 'Unknown error'}`, pct);
+          document.getElementById('start-btn').disabled = false;
+          refreshJobs();
+        }
+      } catch (e) {
+        stopPolling();
+        showStatus(`Poll error: ${e.message}`, 0);
+        document.getElementById('start-btn').disabled = false;
+      }
+    }
+
+    function stopPolling() {
+      if (activePolling) { clearInterval(activePolling); activePolling = null; }
+    }
+
+    // ── Status bar helpers ───────────────────────────────────
+    function showStatus(text, pct) {
+      const bar = document.getElementById('status-bar');
+      bar.classList.add('visible');
+      document.getElementById('status-text').textContent = text;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-pct').textContent = pct + '%';
+    }
+
+    // ── Jobs list ────────────────────────────────────────────
+    async function refreshJobs() {
+      try {
+        const res = await fetch(`${API}/jobs`);
+        const jobs = await res.json();
+        const sec = document.getElementById('jobs-section');
+        const list = document.getElementById('jobs-list');
+
+        if (!jobs.length) { sec.classList.remove('visible'); return; }
+        sec.classList.add('visible');
+
+        list.innerHTML = jobs.map(j => {
+          const p = j.progress;
+          const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
+          const time = new Date(j.created_at).toLocaleTimeString();
+          return `
+            <div class="job-item" onclick="viewJob('${j.job_id}')">
+              <div class="job-top">
+                <span class="job-id">${j.job_id}</span>
+                <span class="badge badge-${j.status}">${j.status}</span>
+              </div>
+              <div class="job-meta">
+                ${p.total_artists} artist(s) &middot;
+                ${p.completed_artists} done (${pct}%) &middot;
+                ${time}
+                ${j.error ? ' &middot; <span style="color:var(--red)">' + esc(j.error) + '</span>' : ''}
+              </div>
+            </div>`;
+        }).join('');
+      } catch (_) {}
+    }
+
+    async function viewJob(jobId) {
+      try {
+        const res = await fetch(`${API}/jobs/${jobId}`);
+        const job = await res.json();
+        if (job.status === 'completed') showResults(job);
+        else if (job.status === 'running') {
+          activeJobId = jobId;
+          const p = job.progress;
+          const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
+          showStatus(`Watching job ${jobId}…`, pct);
+          startPolling(jobId);
+        }
+      } catch (_) {}
+    }
+
+    // ── Results ──────────────────────────────────────────────
+    let lastResults = [];
+
+    function showResults(job) {
+      const sec = document.getElementById('results-section');
+      const body = document.getElementById('results-body');
+      const title = document.getElementById('results-title');
+
+      sec.classList.add('visible');
+      title.textContent = `Results — Job ${job.job_id}`;
+
+      if (job.error && !job.result) {
+        body.innerHTML = `<div class="error-msg">${esc(job.error)}</div>`;
+        lastResults = [];
+        return;
+      }
+
+      lastResults = job.result || [];
+      if (!lastResults.length) {
+        body.innerHTML = '<p style="color:var(--muted)">No results.</p>';
+        return;
+      }
+
+      const cols = [
+        ['Artist',        'artist_name'],
+        ['Genre',         'genre'],
+        ['TikTok',        'tiktok_followers'],
+        ['Spotify',       'spotify_followers'],
+        ['Instagram',     'instagram_followers'],
+        ['Bandsintown',   'bandsintown_followers'],
+        ['IG Handle',     'ig_username'],
+        ['IG ER',         'ig_engagement_rate'],
+        ['Tour Link',     'tour_link'],
+        ['Venue Type',    'venue_type'],
+        ['Soundcharts',   'soundcharts_url'],
+      ];
+
+      let html = '<div class="tbl-wrap"><table><thead><tr>';
+      cols.forEach(([label]) => html += `<th>${label}</th>`);
+      html += '</tr></thead><tbody>';
+
+      lastResults.forEach(r => {
+        html += '<tr>';
+        cols.forEach(([, key]) => {
+          let v = r[key] || '—';
+          if (key === 'soundcharts_url' && v !== '—') v = `<a href="${esc(v)}" target="_blank">Open</a>`;
+          if (key === 'tour_link' && v !== '—' && v.startsWith('http')) v = `<a href="${esc(v)}" target="_blank">Link</a>`;
+          html += `<td>${v}</td>`;
+        });
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      body.innerHTML = html;
+    }
+
+    function closeResults() {
+      document.getElementById('results-section').classList.remove('visible');
+    }
+
+    // ── CSV export ───────────────────────────────────────────
+    function exportCSV() {
+      if (!lastResults.length) return;
+      const keys = Object.keys(lastResults[0]);
+      const header = keys.join(',');
+      const rows = lastResults.map(r => keys.map(k => `"${(r[k]||'').replace(/"/g,'""')}"`).join(','));
+      const csv = [header, ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'artist_research.csv';
+      a.click();
+    }
+
+    // ── Util ─────────────────────────────────────────────────
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    // ── Init ─────────────────────────────────────────────────
+    refreshJobs();
+  </script>
+</body>
+</html>

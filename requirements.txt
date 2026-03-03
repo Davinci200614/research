@@ -1,9 +1,20 @@
+# ── Browser automation ──
 selenium
 undetected-chromedriver
 webdriver-manager
+setuptools               # distutils compat for Python 3.12+
+
+# ── Audio CAPTCHA solving ──
 SpeechRecognition
 pydub
-requests
 imageio-ffmpeg
 PyAudio
+
+# ── OpenAI (tour links, venue types) ──
 openai
+
+# ── API ──
+fastapi
+uvicorn[standard]
+pydantic-settings
+requests
