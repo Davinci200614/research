@@ -527,7 +527,7 @@ def main():
 
             uc_options = uc.ChromeOptions()
             uc_options.add_argument("--start-maximized")
-            er_driver = uc.Chrome(options=uc_options, version_main=144)
+            er_driver = uc.Chrome(options=uc_options, version_main=145)
 
             try:
                 for row_idx, name, ig_username in er_artists:

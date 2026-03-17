@@ -1,4 +1,4 @@
-# Soundcharts Artist Research API
+py# Soundcharts Artist Research API
 
 REST API that researches artists via **Soundcharts**, **TrendHero**, and
 **OpenAI web search**, returning structured JSON with follower counts, genre,
@@ -34,7 +34,8 @@ Each job runs a **4-phase pipeline** per artist:
 3. **Venue type** *(optional)* — Ask OpenAI GPT-4o web search for the
    largest venue type the artist has headlined.
 4. **Engagement rate** *(optional)* — Visit TrendHero, solve reCAPTCHA
-   audio challenge, extract IG engagement rate.
+  audio challenge, extract IG engagement rate. If TrendHero fails,
+  the scraper automatically falls back to SocialCat's engagement-rate calculator.
 
 ---
 
@@ -94,6 +95,7 @@ may need Xvfb or skip that phase (`include_engagement: false`).
 | `POST`   | `/api/v1/scrape`         | Start a research job (returns job ID) |
 | `GET`    | `/api/v1/jobs`           | List all jobs                       |
 | `GET`    | `/api/v1/jobs/{job_id}`  | Get job status / progress / results |
+| `POST`   | `/api/v1/jobs/{job_id}/sync-sheet` | Append completed job results to Google Sheet |
 | `DELETE` | `/api/v1/jobs/{job_id}`  | Remove a job from the store         |
 
 ### Example: Start a research job
@@ -186,6 +188,9 @@ See [`.env.example`](.env.example) for the full list.
 | `MAIL_ADDRESS1`   | —         | Backup Soundcharts email (rotation)          |
 | `MAIL_PASSWORD1`  | —         | Backup Soundcharts password                  |
 | `OPENAI_API_KEY`  | —         | OpenAI API key for web search                |
+| `SHEET_ID`        | —         | Google Sheet ID used by sync endpoint        |
+| `WORKSHEET_NAME`  | `Sheet1`  | Worksheet/tab name to append rows to         |
+| `GOOGLE_SA_JSON`  | —         | Service account JSON path with Sheets access |
 | `CHROME_VERSION`  | `136`     | Must match installed Chrome version          |
 | `HEADLESS`        | `false`   | Run Chrome headless (Soundcharts only)       |
 | `API_HOST`        | `0.0.0.0` | Server bind address                         |

@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from .config import settings
-from .models import ArtistData, JobProgress, JobStatus
+from .models import ArtistData, ConcertData, JobProgress, JobStatus
 
 logger = logging.getLogger(__name__)
 
@@ -32,17 +32,21 @@ class Job:
         self,
         job_id: str,
         artists: List[str],
+        ticketmaster_country_map: Dict[str, str],
         skip_existing: bool,
         include_engagement: bool,
         include_tour_link: bool,
         include_venue_type: bool,
+        include_ticketmaster: bool,
     ):
         self.job_id = job_id
         self.artists = artists
+        self.ticketmaster_country_map = ticketmaster_country_map
         self.skip_existing = skip_existing
         self.include_engagement = include_engagement
         self.include_tour_link = include_tour_link
         self.include_venue_type = include_venue_type
+        self.include_ticketmaster = include_ticketmaster
 
         self.status: JobStatus = JobStatus.QUEUED
         self.created_at: datetime = datetime.now(timezone.utc)
@@ -64,15 +68,18 @@ class JobManager:
     def create(
         self,
         artists: List[str],
+        ticketmaster_country_map: Optional[Dict[str, str]] = None,
         skip_existing: bool = True,
         include_engagement: bool = True,
         include_tour_link: bool = True,
         include_venue_type: bool = True,
+        include_ticketmaster: bool = True,
     ) -> str:
         job_id = uuid.uuid4().hex[:8]
         job = Job(
-            job_id, artists, skip_existing,
+            job_id, artists, ticketmaster_country_map or {}, skip_existing,
             include_engagement, include_tour_link, include_venue_type,
+            include_ticketmaster,
         )
         with self._lock:
             self._jobs[job_id] = job
@@ -130,6 +137,7 @@ class JobManager:
 
                     entry = {
                         "artist_name": artist,
+                        "tm_country": (job.ticketmaster_country_map.get(artist) or "").upper(),
                         "genre": follower_data.get("genre", ""),
                         "tiktok_followers": follower_data.get("tiktok_followers", ""),
                         "spotify_followers": follower_data.get("spotify_followers", ""),
@@ -195,9 +203,15 @@ class JobManager:
                     job.updated_at = datetime.now(timezone.utc)
 
                     try:
+                        # Engagement must always run headed (headless=False).
+                        # Chrome 115+ headless uses OOP iframes for cross-origin
+                        # frames; WebDriver cannot reach the reCAPTCHA bframe
+                        # renderer process in that mode. HEADLESS setting only
+                        # applies to the Soundcharts phase (see README).
                         er_results = get_engagement_rate_batch(
                             list(ig_map.keys()),
                             chrome_version=settings.chrome_version,
+                            headless=False,
                         )
                         for username, er in er_results.items():
                             if er:
@@ -207,6 +221,43 @@ class JobManager:
                             "Job %s: engagement phase failed (results so far preserved): %s",
                             job_id, er_exc,
                         )
+
+            # ── Phase 5: Ticketmaster concerts (undetected Chrome) ──
+            if job.include_ticketmaster:
+                from .scrapers.ticketmaster import scrape_ticketmaster_concerts
+                import time
+
+                job.progress.current_step = "ticketmaster"
+                job.updated_at = datetime.now(timezone.utc)
+
+                try:
+                    artist_specs = [
+                        {
+                            "artist_name": e["artist_name"],
+                            "country": (e.get("tm_country") or "").upper() or "USA",
+                        }
+                        for e in collected
+                    ]
+                    tm_results = scrape_ticketmaster_concerts(
+                        artist_specs,
+                        chrome_version=settings.chrome_version,
+                        proxy_str=settings.tm_proxy or None,
+                    )
+                    for entry in collected:
+                        name = entry["artist_name"]
+                        tm_data = tm_results.get(name, {})
+                        concerts_raw = tm_data.get("concerts", [])
+                        entry["concerts"] = [
+                            ConcertData(**c).model_dump() for c in concerts_raw
+                        ]
+                        entry["tm_profile_url"] = tm_data.get("tm_profile_url", "")
+                        entry["first_presale_date"] = tm_data.get("first_presale_date", "")
+                        entry["first_onsale_date"] = tm_data.get("first_onsale_date", "")
+                except Exception as tm_exc:
+                    logger.warning(
+                        "Job %s: ticketmaster phase failed (results so far preserved): %s",
+                        job_id, tm_exc,
+                    )
 
             # ── Finalize ──
             job.result = [ArtistData(**e) for e in collected]

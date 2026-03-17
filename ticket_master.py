@@ -176,7 +176,7 @@ def create_driver(proxy_addr=None):
     else:
         print("   Browser running WITHOUT proxy (direct connection)")
 
-    driver = uc.Chrome(options=options, version_main=144)
+    driver = uc.Chrome(options=options, version_main=145)
     return driver
 
 

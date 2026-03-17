@@ -6,11 +6,34 @@ Extracted from the original ``soundchart.py`` / ``soundchart_live.py``.
 """
 
 import logging
+import re
 from typing import Optional
+from urllib.parse import urlparse
 
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_domain(url: str) -> str:
+    """Return a clean domain from a URL, stripping scheme, www, and path.
+
+    Examples
+    --------
+    >>> _extract_domain("https://www.brunomars.com/tour/dates?utm_source=ig")
+    'brunomars.com'
+    >>> _extract_domain("http://adele.com")
+    'adele.com'
+    """
+    try:
+        parsed = urlparse(url if "://" in url else f"https://{url}")
+        host = parsed.hostname or ""
+        # strip leading "www."
+        if host.startswith("www."):
+            host = host[4:]
+        return host
+    except Exception:
+        return url
 
 
 def _query_openai(api_key: str, prompt: str) -> Optional[str]:
@@ -47,11 +70,14 @@ def get_tour_link(artist_name: str, api_key: str) -> Optional[str]:
             url = "https://" + url
 
     if url.startswith("http://") or url.startswith("https://"):
-        logger.info("Tour link for %s: %s", artist_name, url)
-        return url
+        domain = _extract_domain(url)
+        logger.info("Tour link for %s: %s (domain: %s)", artist_name, url, domain)
+        return domain
 
     logger.warning("Unexpected response for %s: %s", artist_name, url[:120])
-    return url  # return anyway — user can review
+    # Try to extract a domain even from an unexpected response
+    domain = _extract_domain(url)
+    return domain if "." in domain else url  # return anyway — user can review
 
 
 def get_venue_type(artist_name: str, api_key: str) -> Optional[str]:

@@ -331,7 +331,7 @@ def main():
 
     options = uc.ChromeOptions()
     options.add_argument("--start-maximized")
-    driver = uc.Chrome(options=options, version_main=144)
+    driver = uc.Chrome(options=options, version_main=145)
 
     try:
         failed = []

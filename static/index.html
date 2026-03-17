@@ -4,24 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Artist Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     /* ── Reset & base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:       #0f1117;
-      --surface:  #1a1d27;
-      --border:   #2a2d3a;
-      --text:     #e4e4e7;
-      --muted:    #8b8d97;
+      --bg:       #f4f6fb;
+      --surface:  #ffffff;
+      --border:   #e2e5f1;
+      --text:     #1e2030;
+      --muted:    #6b7089;
       --accent:   #6366f1;
-      --accent-h: #818cf8;
-      --green:    #22c55e;
-      --red:      #ef4444;
-      --amber:    #f59e0b;
-      --radius:   10px;
+      --accent-h: #4f46e5;
+      --accent-light: #eef2ff;
+      --green:    #16a34a;
+      --green-bg: #f0fdf4;
+      --red:      #dc2626;
+      --red-bg:   #fef2f2;
+      --amber:    #d97706;
+      --amber-bg: #fffbeb;
+      --radius:   14px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 3px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.05), 0 2px 4px -2px rgba(0,0,0,.05);
+      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,.07), 0 8px 10px -6px rgba(0,0,0,.04);
     }
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
       background: var(--bg);
       color: var(--text);
       line-height: 1.6;
@@ -29,66 +39,104 @@
     }
 
     /* ── Layout ───────────────────────────────────────────────── */
-    .wrapper { max-width: 1080px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .wrapper { max-width: 1080px; margin: 0 auto; padding: 2.5rem 1.5rem; }
     header { text-align: center; margin-bottom: 2.5rem; }
-    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -.02em; }
-    header h1 span { color: var(--accent-h); }
-    header p { color: var(--muted); font-size: .92rem; margin-top: .35rem; }
+    header h1 { font-size: 1.85rem; font-weight: 700; letter-spacing: -.03em; color: var(--text); }
+    header h1 span {
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: var(--muted); font-size: .92rem; margin-top: .4rem; font-weight: 400; }
+
+    .floating-settings-btn {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1101;
+      box-shadow: var(--shadow-sm);
+    }
 
     /* ── Card ─────────────────────────────────────────────────── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 1.5rem;
+      padding: 1.75rem;
       margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s;
     }
-    .card h2 { font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem; }
+    .card:hover { box-shadow: var(--shadow-md); }
+    .card h2 {
+      font-size: 1.05rem; font-weight: 600; margin-bottom: 1.1rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
 
     /* ── Form ─────────────────────────────────────────────────── */
     textarea {
-      width: 100%; min-height: 100px; resize: vertical;
+      width: 100%; min-height: 110px; resize: vertical;
       background: var(--bg); color: var(--text);
-      border: 1px solid var(--border); border-radius: 8px;
-      padding: .75rem; font-size: .9rem; font-family: inherit;
-      transition: border-color .2s;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: .85rem 1rem; font-size: .9rem; font-family: inherit;
+      transition: border-color .2s, box-shadow .2s;
     }
-    textarea:focus { outline: none; border-color: var(--accent); }
-    textarea::placeholder { color: var(--muted); }
+    textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    }
+    textarea::placeholder { color: var(--muted); opacity: .7; }
 
-    .options { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 1rem; }
+    .options { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.15rem; }
     .options label {
-      display: flex; align-items: center; gap: .4rem;
-      font-size: .88rem; color: var(--muted); cursor: pointer;
-      user-select: none;
+      display: flex; align-items: center; gap: .45rem;
+      font-size: .87rem; color: var(--muted); cursor: pointer;
+      user-select: none; padding: .4rem .75rem;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; transition: all .2s;
     }
+    .options label:hover { border-color: var(--accent); color: var(--text); }
     .options input[type="checkbox"] {
       accent-color: var(--accent);
       width: 16px; height: 16px;
     }
+    .options input[type="checkbox"]:checked + span,
+    .options label:has(input:checked) {
+      color: var(--accent); border-color: var(--accent);
+      background: var(--accent-light);
+    }
 
     .btn {
-      display: inline-flex; align-items: center; gap: .45rem;
-      margin-top: 1.25rem;
-      padding: .65rem 1.5rem;
-      background: var(--accent); color: #fff;
-      border: none; border-radius: 8px;
+      display: inline-flex; align-items: center; gap: .5rem;
+      margin-top: 1.35rem;
+      padding: .7rem 1.6rem;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+      border: none; border-radius: 10px;
       font-size: .92rem; font-weight: 600;
-      cursor: pointer; transition: background .2s;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .2s, opacity .2s;
+      box-shadow: 0 2px 8px rgba(99,102,241,.3);
     }
-    .btn:hover { background: var(--accent-h); }
-    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(99,102,241,.35);
+    }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn svg { width: 18px; height: 18px; }
 
     /* ── Status bar ───────────────────────────────────────────── */
     #status-bar {
       display: none; align-items: center; gap: .6rem;
-      margin-top: 1rem; font-size: .88rem; color: var(--muted);
+      margin-top: 1.15rem; font-size: .87rem; color: var(--muted);
+      background: var(--bg); padding: .65rem 1rem; border-radius: 10px;
+      border: 1px solid var(--border);
     }
     #status-bar.visible { display: flex; }
     .spinner {
-      width: 16px; height: 16px;
-      border: 2px solid var(--border);
+      width: 16px; height: 16px; flex-shrink: 0;
+      border: 2.5px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin .7s linear infinite;
@@ -96,92 +144,273 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .progress-bar-track {
-      flex: 1; height: 6px;
-      background: var(--border); border-radius: 3px; overflow: hidden;
+      flex: 1; height: 7px;
+      background: var(--border); border-radius: 4px; overflow: hidden;
     }
     .progress-bar-fill {
       height: 100%; width: 0%;
-      background: var(--accent);
-      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent), #a855f7);
+      border-radius: 4px;
       transition: width .4s ease;
     }
 
     /* ── Badge ────────────────────────────────────────────────── */
     .badge {
       display: inline-block;
-      padding: .15rem .55rem; border-radius: 999px;
-      font-size: .75rem; font-weight: 600; text-transform: uppercase;
+      padding: .2rem .65rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .03em;
     }
-    .badge-queued   { background: #2a2d3a; color: var(--muted); }
-    .badge-running  { background: rgba(99,102,241,.15); color: var(--accent-h); }
-    .badge-completed{ background: rgba(34,197,94,.12);  color: var(--green); }
-    .badge-failed   { background: rgba(239,68,68,.12);  color: var(--red); }
+    .badge-queued   { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+    .badge-running  { background: var(--accent-light); color: var(--accent); }
+    .badge-completed{ background: var(--green-bg); color: var(--green); }
+    .badge-failed   { background: var(--red-bg);   color: var(--red); }
 
     /* ── Jobs list ────────────────────────────────────────────── */
     #jobs-section { display: none; }
     #jobs-section.visible { display: block; }
     .jobs-header { display: flex; justify-content: space-between; align-items: center; }
-    .jobs-header button {
-      background: none; border: 1px solid var(--border); border-radius: 6px;
-      color: var(--muted); font-size: .8rem; padding: .3rem .7rem;
-      cursor: pointer; transition: border-color .2s, color .2s;
+    .jobs-header button, .outline-btn {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); font-size: .8rem; font-weight: 500; padding: .35rem .85rem;
+      cursor: pointer; transition: all .2s;
     }
-    .jobs-header button:hover { border-color: var(--accent); color: var(--text); }
+    .jobs-header button:hover, .outline-btn:hover {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-light);
+    }
 
     .job-item {
-      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
       padding: 1rem 1.25rem; margin-top: .75rem; cursor: pointer;
-      transition: border-color .2s;
+      transition: all .2s;
     }
-    .job-item:hover { border-color: var(--accent); }
+    .job-item:hover {
+      border-color: var(--accent); background: var(--accent-light);
+      box-shadow: var(--shadow-sm);
+    }
     .job-top { display: flex; justify-content: space-between; align-items: center; }
-    .job-id { font-family: 'Cascadia Code', monospace; font-size: .85rem; }
-    .job-meta { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+    .job-id { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .84rem; color: var(--text); }
+    .job-meta { font-size: .79rem; color: var(--muted); margin-top: .35rem; }
 
     /* ── Results table ────────────────────────────────────────── */
     #results-section { display: none; }
     #results-section.visible { display: block; }
-    .results-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .results-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; gap: .5rem; }
+    .results-top > div { display: flex; gap: .5rem; }
     .results-top button {
-      background: none; border: 1px solid var(--border); border-radius: 6px;
-      color: var(--muted); font-size: .8rem; padding: .3rem .7rem;
-      cursor: pointer; transition: border-color .2s, color .2s;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--muted); font-size: .8rem; font-weight: 500; padding: .35rem .85rem;
+      cursor: pointer; transition: all .2s;
     }
-    .results-top button:hover { border-color: var(--accent); color: var(--text); }
+    .results-top button:hover {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-light);
+    }
 
-    .tbl-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    .feedback {
+      margin-bottom: .9rem;
+      border-radius: 10px;
+      padding: .65rem .85rem;
+      font-size: .84rem;
+      border: 1px solid transparent;
+      display: none;
+    }
+    .feedback.visible { display: block; }
+    .feedback.success {
+      border-color: rgba(22,163,74,.25);
+      background: var(--green-bg);
+      color: var(--green);
+    }
+    .feedback.error {
+      border-color: rgba(220,38,38,.2);
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .tbl-wrap {
+      overflow-x: auto; border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .84rem; }
     th, td {
-      text-align: left; padding: .6rem .75rem;
+      text-align: left; padding: .7rem .85rem;
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
     }
-    th { color: var(--muted); font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; }
+    th {
+      color: var(--muted); font-weight: 600; font-size: .75rem;
+      text-transform: uppercase; letter-spacing: .05em;
+      background: var(--bg); position: sticky; top: 0;
+    }
     td { color: var(--text); }
-    td a { color: var(--accent-h); text-decoration: none; }
-    td a:hover { text-decoration: underline; }
+    td a {
+      color: var(--accent); text-decoration: none; font-weight: 500;
+      transition: color .15s;
+    }
+    td a:hover { color: var(--accent-h); text-decoration: underline; }
+    tbody tr { transition: background .15s; }
+    tbody tr:hover { background: rgba(99,102,241,.03); }
     tr:last-child td { border-bottom: none; }
 
     .error-msg {
-      background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.25);
-      border-radius: 8px; padding: .75rem 1rem; color: var(--red);
-      font-size: .88rem; margin-top: .75rem;
+      background: var(--red-bg); border: 1px solid rgba(220,38,38,.2);
+      border-radius: 10px; padding: .85rem 1.1rem; color: var(--red);
+      font-size: .87rem; margin-top: .75rem; font-weight: 500;
     }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .8rem;
+      margin-top: .25rem;
+    }
+    .field { display: flex; flex-direction: column; gap: .35rem; }
+    .field.full { grid-column: 1 / -1; }
+    .field label {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .field input {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: .65rem .8rem;
+      font-size: .87rem;
+      font-family: inherit;
+      color: var(--text);
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+    }
+    .settings-actions {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-top: .9rem;
+      flex-wrap: wrap;
+    }
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      color: var(--muted);
+      font-size: .85rem;
+      padding: .35rem .55rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+    .switch input[type='checkbox'] {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--accent);
+    }
+
+    #settings-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 20, 33, .35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+      z-index: 1090;
+    }
+    #settings-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #settings-card {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(440px, 96vw);
+      height: 100vh;
+      margin: 0;
+      border-radius: 0;
+      border-left: 1px solid var(--border);
+      border-right: none;
+      border-top: none;
+      border-bottom: none;
+      overflow-y: auto;
+      z-index: 1100;
+      transform: translateX(104%);
+      transition: transform .25s ease;
+      box-shadow: -10px 0 28px rgba(0, 0, 0, .08);
+    }
+    #settings-card.visible { transform: translateX(0); }
 
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 640px) {
-      .wrapper { padding: 1.25rem 1rem; }
-      .options { flex-direction: column; gap: .75rem; }
+      .wrapper { padding: 1.5rem 1rem; }
+      .options { flex-direction: column; gap: .6rem; }
+      .card { padding: 1.25rem; }
+      .results-top { flex-direction: column; align-items: flex-start; }
+      .settings-grid { grid-template-columns: 1fr; }
+      .floating-settings-btn { top: .75rem; right: .75rem; }
+      #settings-card { width: 100vw; }
     }
   </style>
 </head>
 <body>
+  <button class="outline-btn floating-settings-btn" id="toggle-settings-btn" onclick="toggleSettings()">Credentials</button>
+  <div id="settings-backdrop" onclick="closeSettings()"></div>
+
   <div class="wrapper">
     <!-- ── Header ────────────────────────────────────────────── -->
     <header>
-      <h1><span>&#9835;</span> Artist Research</h1>
-      <p>Search artists on Soundcharts &middot; Engagement rates &middot; Tour links &middot; Venue types</p>
+      <h1>Artist Research</h1>
+      <p>Search artists on Soundcharts &middot; Engagement rates &middot; Tour links &middot; Venue types &middot; Ticketmaster concerts</p>
     </header>
+
+    <div class="card" id="settings-card">
+      <h2>Credentials & Runtime Settings</h2>
+      <div class="settings-grid">
+        <div class="field">
+          <label for="cfg-mail-address">Soundcharts Email</label>
+          <input id="cfg-mail-address" type="email" placeholder="you@example.com" />
+        </div>
+        <div class="field">
+          <label for="cfg-mail-password">Soundcharts Password</label>
+          <input id="cfg-mail-password" type="password" placeholder="Leave blank to keep current" />
+        </div>
+        <div class="field">
+          <label for="cfg-openai-key">OpenAI API Key</label>
+          <input id="cfg-openai-key" type="password" placeholder="sk-... (leave blank to keep current)" />
+        </div>
+        <div class="field">
+          <label for="cfg-chrome-version">Chrome Version</label>
+          <input id="cfg-chrome-version" type="number" min="0" step="1" placeholder="145" />
+        </div>
+        <div class="field">
+          <label for="cfg-sheet-id">Google Sheet ID</label>
+          <input id="cfg-sheet-id" type="text" placeholder="Sheet ID" />
+        </div>
+        <div class="field">
+          <label for="cfg-worksheet-name">Worksheet Name</label>
+          <input id="cfg-worksheet-name" type="text" placeholder="Sheet1" />
+        </div>
+        <div class="field full">
+          <label for="cfg-sa-json">Google Service Account JSON Path</label>
+          <input id="cfg-sa-json" type="text" placeholder="C:/path/to/service-account.json" />
+        </div>
+        <div class="field full">
+          <label for="cfg-tm-proxy">Ticketmaster Proxy (optional)</label>
+          <input id="cfg-tm-proxy" type="text" placeholder="ip:port OR ip:port:user:pass" />
+        </div>
+      </div>
+      <div class="settings-actions">
+        <label class="switch"><input id="cfg-headless" type="checkbox" /> Headless Soundcharts</label>
+        <label class="switch"><input id="cfg-persist-env" type="checkbox" checked /> Persist to .env</label>
+        <button class="outline-btn" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
+        <button class="outline-btn" onclick="loadSettings(true)">Refresh</button>
+      </div>
+      <div id="settings-feedback" class="feedback" style="margin-top:.9rem;"></div>
+    </div>
 
     <!-- ── Input form ────────────────────────────────────────── -->
     <div class="card" id="form-card">
@@ -191,6 +420,7 @@
         <label><input type="checkbox" id="opt-engagement" checked /> IG Engagement Rate</label>
         <label><input type="checkbox" id="opt-tour" checked /> Tour Link</label>
         <label><input type="checkbox" id="opt-venue" checked /> Venue Type</label>
+        <label><input type="checkbox" id="opt-ticketmaster" checked /> Ticketmaster Concerts</label>
       </div>
       <button class="btn" id="start-btn" onclick="startJob()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -218,10 +448,13 @@
       <div class="results-top">
         <h2 id="results-title">Results</h2>
         <div>
+          <button id="sync-sheet-btn" onclick="syncToSheet()">Sync to Sheet</button>
+          <button id="open-sheet-btn" onclick="openSheet()" style="display:none;">Open Sheet</button>
           <button onclick="exportCSV()">Export CSV</button>
           <button onclick="closeResults()">Close</button>
         </div>
       </div>
+      <div id="results-feedback" class="feedback"></div>
       <div id="results-body"></div>
     </div>
   </div>
@@ -230,19 +463,128 @@
     const API = '/api/v1';
     let activePolling = null;    // interval id
     let activeJobId   = null;
+    let settingsLoaded = false;
+
+    async function toggleSettings() {
+      const card = document.getElementById('settings-card');
+      const backdrop = document.getElementById('settings-backdrop');
+      const btn = document.getElementById('toggle-settings-btn');
+      const show = !card.classList.contains('visible');
+      card.classList.toggle('visible', show);
+      backdrop.classList.toggle('visible', show);
+      btn.textContent = show ? 'Close Panel' : 'Credentials';
+
+      if (show && !settingsLoaded) {
+        await loadSettings();
+        settingsLoaded = true;
+      }
+    }
+
+    function closeSettings() {
+      const card = document.getElementById('settings-card');
+      const backdrop = document.getElementById('settings-backdrop');
+      const btn = document.getElementById('toggle-settings-btn');
+      card.classList.remove('visible');
+      backdrop.classList.remove('visible');
+      btn.textContent = 'Credentials';
+    }
+
+    function setSettingsFeedback(text, kind = 'success') {
+      const box = document.getElementById('settings-feedback');
+      if (!text) {
+        box.className = 'feedback';
+        box.textContent = '';
+        return;
+      }
+      box.className = `feedback visible ${kind}`;
+      box.textContent = text;
+    }
+
+    async function loadSettings(showToast = false) {
+      try {
+        const res = await fetch(`${API}/settings`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const cfg = await res.json();
+
+        document.getElementById('cfg-mail-address').value = cfg.mail_address || '';
+        document.getElementById('cfg-sheet-id').value = cfg.sheet_id || '';
+        document.getElementById('cfg-worksheet-name').value = cfg.worksheet_name || '';
+        document.getElementById('cfg-sa-json').value = cfg.google_sa_json || '';
+        document.getElementById('cfg-tm-proxy').value = cfg.tm_proxy || '';
+        document.getElementById('cfg-headless').checked = !!cfg.headless;
+        document.getElementById('cfg-chrome-version').value = cfg.chrome_version ?? 0;
+
+        const passInput = document.getElementById('cfg-mail-password');
+        passInput.value = '';
+        passInput.placeholder = cfg.mail_password_set ? 'Saved (leave blank to keep current)' : 'Enter Soundcharts password';
+
+        const keyInput = document.getElementById('cfg-openai-key');
+        keyInput.value = '';
+        keyInput.placeholder = cfg.openai_api_key_set ? 'Saved (leave blank to keep current)' : 'Enter OpenAI API key';
+
+        if (showToast) setSettingsFeedback('Settings reloaded.', 'success');
+      } catch (e) {
+        setSettingsFeedback(`Could not load settings: ${e.message}`, 'error');
+      }
+    }
+
+    async function saveSettings() {
+      const btn = document.getElementById('save-settings-btn');
+      btn.disabled = true;
+      setSettingsFeedback('Saving settings...', 'success');
+
+      const body = {
+        mail_address: document.getElementById('cfg-mail-address').value.trim(),
+        sheet_id: document.getElementById('cfg-sheet-id').value.trim(),
+        worksheet_name: document.getElementById('cfg-worksheet-name').value.trim() || 'Sheet1',
+        google_sa_json: document.getElementById('cfg-sa-json').value.trim(),
+        tm_proxy: document.getElementById('cfg-tm-proxy').value.trim(),
+        headless: document.getElementById('cfg-headless').checked,
+        chrome_version: Number(document.getElementById('cfg-chrome-version').value || 0),
+        persist_to_env: document.getElementById('cfg-persist-env').checked,
+      };
+
+      const pass = document.getElementById('cfg-mail-password').value.trim();
+      if (pass) body.mail_password = pass;
+
+      const openai = document.getElementById('cfg-openai-key').value.trim();
+      if (openai) body.openai_api_key = openai;
+
+      try {
+        const res = await fetch(`${API}/settings`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+        const persistedMsg = data.persisted_to_env ? ' Persisted to .env.' : ' Runtime only.';
+        setSettingsFeedback(`Settings saved.${persistedMsg} New jobs will use updated credentials.`, 'success');
+        document.getElementById('cfg-mail-password').value = '';
+        document.getElementById('cfg-openai-key').value = '';
+      } catch (e) {
+        setSettingsFeedback(`Save failed: ${e.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
 
     // ── Start job ────────────────────────────────────────────
     async function startJob() {
       const raw = document.getElementById('artists-input').value.trim();
       if (!raw) return;
-      const artists = raw.split('\n').map(s => s.trim()).filter(Boolean);
+      const parsed = parseArtistLines(raw);
+      const artists = parsed.artists;
+      const ticketmaster_country_map = parsed.ticketmaster_country_map;
       if (!artists.length) return;
 
       const body = {
         artists,
+        ticketmaster_country_map,
         include_engagement: document.getElementById('opt-engagement').checked,
         include_tour_link:  document.getElementById('opt-tour').checked,
         include_venue_type: document.getElementById('opt-venue').checked,
+        include_ticketmaster: document.getElementById('opt-ticketmaster').checked,
       };
 
       const btn = document.getElementById('start-btn');
@@ -276,6 +618,13 @@
     async function pollJob(jobId) {
       try {
         const res = await fetch(`${API}/jobs/${jobId}`);
+        if (res.status === 404) {
+          stopPolling();
+          showStatus('Job no longer exists (server restarted). Please start a new job.', 0);
+          document.getElementById('start-btn').disabled = false;
+          refreshJobs();
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const job = await res.json();
         const p = job.progress;
@@ -368,24 +717,35 @@
 
     // ── Results ──────────────────────────────────────────────
     let lastResults = [];
+    let currentResultJobId = null;
+    let lastSyncedSheetUrl = '';
 
     function showResults(job) {
       const sec = document.getElementById('results-section');
       const body = document.getElementById('results-body');
       const title = document.getElementById('results-title');
+      const syncBtn = document.getElementById('sync-sheet-btn');
+      const openBtn = document.getElementById('open-sheet-btn');
 
       sec.classList.add('visible');
       title.textContent = `Results — Job ${job.job_id}`;
+      currentResultJobId = job.job_id;
+      lastSyncedSheetUrl = '';
+      openBtn.style.display = 'none';
+      syncBtn.disabled = false;
+      setResultsFeedback('');
 
       if (job.error && !job.result) {
         body.innerHTML = `<div class="error-msg">${esc(job.error)}</div>`;
         lastResults = [];
+        syncBtn.disabled = true;
         return;
       }
 
       lastResults = job.result || [];
       if (!lastResults.length) {
         body.innerHTML = '<p style="color:var(--muted)">No results.</p>';
+        syncBtn.disabled = true;
         return;
       }
 
@@ -401,6 +761,10 @@
         ['Tour Link',     'tour_link'],
         ['Venue Type',    'venue_type'],
         ['Soundcharts',   'soundcharts_url'],
+        ['TM Profile',    'tm_profile_url'],
+        ['1st Presale',   'first_presale_date'],
+        ['1st Onsale',    'first_onsale_date'],
+        ['Concerts',      'concerts'],
       ];
 
       let html = '<div class="tbl-wrap"><table><thead><tr>';
@@ -411,8 +775,13 @@
         html += '<tr>';
         cols.forEach(([, key]) => {
           let v = r[key] || '—';
-          if (key === 'soundcharts_url' && v !== '—') v = `<a href="${esc(v)}" target="_blank">Open</a>`;
-          if (key === 'tour_link' && v !== '—' && v.startsWith('http')) v = `<a href="${esc(v)}" target="_blank">Link</a>`;
+          if (key === 'concerts' && Array.isArray(r[key]) && r[key].length) {
+            v = `<button class="outline-btn" onclick='showConcerts(${JSON.stringify(r[key]).replace(/'/g,"&#39;")})'>${r[key].length} event(s)</button>`;
+          } else if (key === 'concerts') {
+            v = '—';
+          } else if (key === 'soundcharts_url' && v !== '—') v = `<a href="${esc(v)}" target="_blank">Open</a>`;
+          else if (key === 'tm_profile_url' && v !== '—') v = `<a href="${esc(v)}" target="_blank">Open</a>`;
+          else if (key === 'tour_link' && v !== '—' && v.startsWith('http')) v = `<a href="${esc(v)}" target="_blank">Link</a>`;
           html += `<td>${v}</td>`;
         });
         html += '</tr>';
@@ -424,15 +793,62 @@
 
     function closeResults() {
       document.getElementById('results-section').classList.remove('visible');
+      setResultsFeedback('');
+    }
+
+    async function syncToSheet() {
+      if (!currentResultJobId) return;
+
+      const syncBtn = document.getElementById('sync-sheet-btn');
+      const openBtn = document.getElementById('open-sheet-btn');
+      syncBtn.disabled = true;
+      setResultsFeedback('Syncing rows to your sheet...', 'success');
+
+      try {
+        const res = await fetch(`${API}/jobs/${currentResultJobId}/sync-sheet`, {
+          method: 'POST',
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+
+        lastSyncedSheetUrl = data.sheet_url || '';
+        if (lastSyncedSheetUrl) openBtn.style.display = 'inline-flex';
+        setResultsFeedback(`${data.message} (${data.worksheet_name})`, 'success');
+      } catch (e) {
+        setResultsFeedback(`Sheet sync failed: ${e.message}`, 'error');
+      } finally {
+        syncBtn.disabled = false;
+      }
+    }
+
+    function openSheet() {
+      if (!lastSyncedSheetUrl) return;
+      window.open(lastSyncedSheetUrl, '_blank');
+    }
+
+    function setResultsFeedback(text, kind = 'success') {
+      const box = document.getElementById('results-feedback');
+      if (!text) {
+        box.className = 'feedback';
+        box.textContent = '';
+        return;
+      }
+
+      box.className = `feedback visible ${kind}`;
+      box.textContent = text;
     }
 
     // ── CSV export ───────────────────────────────────────────
     function exportCSV() {
       if (!lastResults.length) return;
-      const keys = Object.keys(lastResults[0]);
-      const header = keys.join(',');
-      const rows = lastResults.map(r => keys.map(k => `"${(r[k]||'').replace(/"/g,'""')}"`).join(','));
-      const csv = [header, ...rows].join('\n');
+      const keys = Object.keys(lastResults[0]).filter(k => k !== 'concerts');
+      const header = [...keys, 'concerts_count'];
+      const rows = lastResults.map(r => {
+        const base = keys.map(k => `"${(r[k]||'').toString().replace(/"/g,'""')}"`);
+        base.push(`"${(r.concerts||[]).length}"`);
+        return base.join(',');
+      });
+      const csv = [header.join(','), ...rows].join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -442,6 +858,78 @@
 
     // ── Util ─────────────────────────────────────────────────
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function parseArtistLines(raw) {
+      const artists = [];
+      const ticketmaster_country_map = {};
+      const valid = { USA: true, CANADA: true, MEX: true, UK: true };
+
+      raw.split('\n').forEach(line => {
+        const text = line.trim();
+        if (!text) return;
+
+        let artist = text;
+        let country = '';
+
+        // Preferred input: Artist Name<TAB>TM COUNTRY
+        const tabParts = text.split(/\t+/).map(p => p.trim()).filter(Boolean);
+        if (tabParts.length >= 2) {
+          artist = tabParts[0];
+          const m = tabParts[1].match(/^TM\s+(USA|CANADA|MEX|UK)$/i);
+          if (m) country = m[1].toUpperCase();
+        } else {
+          // Also accept: Artist Name TM USA
+          const m = text.match(/^(.*?)\s+TM\s+(USA|CANADA|MEX|UK)$/i);
+          if (m) {
+            artist = m[1].trim();
+            country = m[2].toUpperCase();
+          }
+        }
+
+        if (!artist) return;
+        artists.push(artist);
+        if (country && valid[country]) {
+          ticketmaster_country_map[artist] = country;
+        }
+      });
+
+      return { artists, ticketmaster_country_map };
+    }
+
+    // ── Concert detail modal ─────────────────────────────────
+    function showConcerts(concerts) {
+      let html = '<div class="tbl-wrap"><table><thead><tr>';
+      const cCols = ['Date','Day','Time','City','State','Venue','Tour / Event','Presale / Onsale','Link'];
+      cCols.forEach(c => html += `<th>${c}</th>`);
+      html += '</tr></thead><tbody>';
+      concerts.forEach(c => {
+        const url = c.event_url ? `<a href="${esc(c.event_url)}" target="_blank">Open</a>` : '—';
+        html += `<tr>
+          <td>${esc(c.date||'')}</td><td>${esc(c.day||'')}</td><td>${esc(c.time||'')}</td>
+          <td>${esc(c.city||'')}</td><td>${esc(c.state||'')}</td><td>${esc(c.venue||'')}</td>
+          <td>${esc(c.tour_name||'')}</td><td>${esc(c.presale_info||'')}</td><td>${url}</td>
+        </tr>`;
+      });
+      html += '</tbody></table></div>';
+
+      // Show in a simple overlay
+      let overlay = document.getElementById('concert-overlay');
+      if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'concert-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:2rem;';
+        overlay.innerHTML = `<div style="background:var(--surface);border-radius:14px;padding:1.5rem;max-width:95vw;max-height:85vh;overflow:auto;border:1px solid var(--border);box-shadow:0 8px 30px rgba(0,0,0,.25);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <h3 style="margin:0;">Concert Details</h3>
+            <button class="outline-btn" onclick="document.getElementById('concert-overlay').style.display='none'">Close</button>
+          </div>
+          <div id="concert-overlay-body"></div>
+        </div>`;
+        document.body.appendChild(overlay);
+      }
+      document.getElementById('concert-overlay-body').innerHTML = html;
+      overlay.style.display = 'flex';
+    }
 
     // ── Init ─────────────────────────────────────────────────
     refreshJobs();

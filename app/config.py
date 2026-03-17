@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     headless: bool = False
 
     # ── Proxy (Ticketmaster only) ──
+    # Format: ip:port:username:password  (authenticated)
+    #     or: ip:port                    (open proxy)
+    #     or: empty string               (no proxy)
+    tm_proxy: str = ""
     proxy_list_file: str = "proxy_list.txt"
     default_max_proxy_tests: int = 40
 
