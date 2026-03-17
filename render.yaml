@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: soundcharts-research-api
+    env: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: HEADLESS
+        value: "true"
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: MAIL_ADDRESS
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_ADDRESS1
+        sync: false
+      - key: MAIL_PASSWORD1
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TM_PROXY
+        sync: false
+      - key: SHEET_ID
+        sync: false
+      - key: WORKSHEET_NAME
+        value: "Sheet1"
+      - key: GOOGLE_SA_JSON
+        sync: false

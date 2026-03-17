@@ -87,6 +87,31 @@ may need Xvfb or skip that phase (`include_engagement: false`).
 
 ---
 
+## Deploy And Share (Render)
+
+This repo includes a ready-to-deploy Render blueprint in `render.yaml`.
+
+1. Push this repository to GitHub.
+2. In Render, click **New** → **Blueprint** and select your repo.
+3. Render will detect `render.yaml` and create the web service.
+4. In Render dashboard, set required secrets:
+  - `MAIL_ADDRESS`
+  - `MAIL_PASSWORD`
+  - `MAIL_ADDRESS1`
+  - `MAIL_PASSWORD1`
+  - `OPENAI_API_KEY`
+5. Deploy and open your public URL:
+  - Health check: `https://<your-service>.onrender.com/api/v1/health`
+  - Docs: `https://<your-service>.onrender.com/docs`
+
+Notes:
+- Container deployments run with `HEADLESS=true`.
+- Engagement scraping may be unreliable in fully headless cloud environments;
+  if needed, call `/api/v1/scrape` with `"include_engagement": false`.
+- Jobs are in-memory only; restarting the service clears old job history.
+
+---
+
 ## API Endpoints
 
 | Method   | Path                     | Description                         |
@@ -218,12 +243,3 @@ See [`.env.example`](.env.example) for the full list.
    browser for CAPTCHA solving. On a server with limited RAM, avoid
    running too many concurrent jobs.
 
----
-
-## Original Scripts
-
-The original standalone scripts are preserved for reference:
-
-- `soundchart.py` — CSV-based Soundcharts scraper
-- `soundchart_live.py` — Google Sheets-based Soundcharts scraper
-- `scrape_engagement.py` — Standalone IG engagement scraper
