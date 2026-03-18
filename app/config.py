@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     disable_engagement_in_headless: bool = True
     redis_url: str = ""
     job_retention_hours: int = 24
+    stale_running_job_minutes: int = 20
+    ticketmaster_page_load_timeout_seconds: int = 60
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

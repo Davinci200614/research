@@ -178,6 +178,15 @@ def _create_driver(chrome_version: int = 0, proxy_str: Optional[str] = None) -> 
         kwargs["version_main"] = chrome_version
 
     driver = uc.Chrome(**kwargs)
+    try:
+        from ..config import settings
+
+        timeout_sec = max(15, int(settings.ticketmaster_page_load_timeout_seconds))
+        driver.set_page_load_timeout(timeout_sec)
+        driver.set_script_timeout(timeout_sec)
+    except Exception:
+        # Keep scraper resilient even if timeout setup is unavailable.
+        pass
     return driver
 
 

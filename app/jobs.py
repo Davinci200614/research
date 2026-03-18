@@ -171,6 +171,36 @@ class JobManager:
             logger.warning("Failed listing jobs from Redis: %s", exc)
         return jobs
 
+    def _expire_orphaned_job_if_stale(self, job: Job) -> Job:
+        """Fail stale running/queued jobs that no longer have a local worker.
+
+        This protects Redis-backed deployments from jobs stuck forever after
+        process/container restarts.
+        """
+        if job.status not in {JobStatus.QUEUED, JobStatus.RUNNING}:
+            return job
+
+        stale_minutes = max(1, int(settings.stale_running_job_minutes))
+        age_seconds = (datetime.now(timezone.utc) - job.updated_at).total_seconds()
+        if age_seconds < stale_minutes * 60:
+            return job
+
+        logger.warning(
+            "Marking stale orphaned job %s as failed (age=%ds, step=%s)",
+            job.job_id,
+            int(age_seconds),
+            job.progress.current_step,
+        )
+        job.status = JobStatus.FAILED
+        current_step = job.progress.current_step or "unknown"
+        job.error = (
+            "Job stopped unexpectedly and was auto-failed after timeout "
+            f"while in step '{current_step}'."
+        )
+        job.progress.current_step = "stale_timeout"
+        self._touch(job)
+        return job
+
     # ── CRUD ─────────────────────────────────────────────────────────────
 
     def create(
@@ -211,13 +241,18 @@ class JobManager:
         job = self._jobs.get(job_id)
         if job:
             return job
-        return self._load_job_from_redis(job_id)
+        redis_job = self._load_job_from_redis(job_id)
+        if redis_job:
+            return self._expire_orphaned_job_if_stale(redis_job)
+        return None
 
     def list_all(self) -> List[Job]:
         local_jobs = list(self._jobs.values())
         jobs_by_id = {job.job_id: job for job in local_jobs}
         for redis_job in self._list_jobs_from_redis():
-            jobs_by_id.setdefault(redis_job.job_id, redis_job)
+            if redis_job.job_id in jobs_by_id:
+                continue
+            jobs_by_id[redis_job.job_id] = self._expire_orphaned_job_if_stale(redis_job)
         return list(jobs_by_id.values())
 
     def delete(self, job_id: str) -> bool:
