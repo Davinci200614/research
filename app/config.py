@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     cors_origins: str = "*"
+    max_concurrent_jobs: int = 1
+    disable_engagement_in_headless: bool = True
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

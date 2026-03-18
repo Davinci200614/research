@@ -82,6 +82,17 @@ class JobManager:
             include_ticketmaster,
         )
         with self._lock:
+            active_jobs = sum(
+                1
+                for existing in self._jobs.values()
+                if existing.status in {JobStatus.QUEUED, JobStatus.RUNNING}
+            )
+            max_jobs = max(1, int(settings.max_concurrent_jobs))
+            if active_jobs >= max_jobs:
+                raise RuntimeError(
+                    "Another scrape job is already running. "
+                    "Please wait for it to finish and retry."
+                )
             self._jobs[job_id] = job
         thread = threading.Thread(target=self._run, args=(job_id,), daemon=True)
         thread.start()
@@ -190,37 +201,44 @@ class JobManager:
 
             # ── Phase 4: Engagement rates (undetected Chrome + CAPTCHA) ──
             if job.include_engagement:
-                from .scrapers.engagement import get_engagement_rate_batch
-                import time
+                if settings.headless and settings.disable_engagement_in_headless:
+                    logger.warning(
+                        "Job %s: skipping engagement phase because HEADLESS=true "
+                        "and DISABLE_ENGAGEMENT_IN_HEADLESS=true",
+                        job_id,
+                    )
+                else:
+                    from .scrapers.engagement import get_engagement_rate_batch
+                    import time
 
-                ig_map = {
-                    e["ig_username"]: e
-                    for e in collected
-                    if e["ig_username"]
-                }
-                if ig_map:
-                    job.progress.current_step = "engagement_rates"
-                    job.updated_at = datetime.now(timezone.utc)
+                    ig_map = {
+                        e["ig_username"]: e
+                        for e in collected
+                        if e["ig_username"]
+                    }
+                    if ig_map:
+                        job.progress.current_step = "engagement_rates"
+                        job.updated_at = datetime.now(timezone.utc)
 
-                    try:
-                        # Engagement must always run headed (headless=False).
-                        # Chrome 115+ headless uses OOP iframes for cross-origin
-                        # frames; WebDriver cannot reach the reCAPTCHA bframe
-                        # renderer process in that mode. HEADLESS setting only
-                        # applies to the Soundcharts phase (see README).
-                        er_results = get_engagement_rate_batch(
-                            list(ig_map.keys()),
-                            chrome_version=settings.chrome_version,
-                            headless=False,
-                        )
-                        for username, er in er_results.items():
-                            if er:
-                                ig_map[username]["ig_engagement_rate"] = er
-                    except Exception as er_exc:
-                        logger.warning(
-                            "Job %s: engagement phase failed (results so far preserved): %s",
-                            job_id, er_exc,
-                        )
+                        try:
+                            # Engagement must always run headed (headless=False).
+                            # Chrome 115+ headless uses OOP iframes for cross-origin
+                            # frames; WebDriver cannot reach the reCAPTCHA bframe
+                            # renderer process in that mode. HEADLESS setting only
+                            # applies to the Soundcharts phase (see README).
+                            er_results = get_engagement_rate_batch(
+                                list(ig_map.keys()),
+                                chrome_version=settings.chrome_version,
+                                headless=False,
+                            )
+                            for username, er in er_results.items():
+                                if er:
+                                    ig_map[username]["ig_engagement_rate"] = er
+                        except Exception as er_exc:
+                            logger.warning(
+                                "Job %s: engagement phase failed (results so far preserved): %s",
+                                job_id, er_exc,
+                            )
 
             # ── Phase 5: Ticketmaster concerts (undetected Chrome) ──
             if job.include_ticketmaster:

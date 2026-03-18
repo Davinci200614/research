@@ -47,6 +47,8 @@ _ENV_KEY_MAP = {
     "tm_proxy": "TM_PROXY",
     "headless": "HEADLESS",
     "chrome_version": "CHROME_VERSION",
+    "max_concurrent_jobs": "MAX_CONCURRENT_JOBS",
+    "disable_engagement_in_headless": "DISABLE_ENGAGEMENT_IN_HEADLESS",
 }
 
 # ── Logging ──────────────────────────────────────────────────────────────────
@@ -140,15 +142,18 @@ def start_scrape(body: ScrapeRequest):
 
     Returns a ``job_id`` to poll via ``GET /api/v1/jobs/{job_id}``.
     """
-    job_id = job_manager.create(
-        artists=body.artists,
-        ticketmaster_country_map=body.ticketmaster_country_map,
-        skip_existing=body.skip_existing,
-        include_engagement=body.include_engagement,
-        include_tour_link=body.include_tour_link,
-        include_venue_type=body.include_venue_type,
-        include_ticketmaster=body.include_ticketmaster,
-    )
+    try:
+        job_id = job_manager.create(
+            artists=body.artists,
+            ticketmaster_country_map=body.ticketmaster_country_map,
+            skip_existing=body.skip_existing,
+            include_engagement=body.include_engagement,
+            include_tour_link=body.include_tour_link,
+            include_venue_type=body.include_venue_type,
+            include_ticketmaster=body.include_ticketmaster,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return ScrapeStartResponse(
         job_id=job_id,
         status=JobStatus.QUEUED,
@@ -262,6 +267,8 @@ def _settings_to_response(persisted_to_env: bool = False) -> RuntimeConfigRespon
         tm_proxy=settings.tm_proxy,
         headless=settings.headless,
         chrome_version=settings.chrome_version,
+        max_concurrent_jobs=settings.max_concurrent_jobs,
+        disable_engagement_in_headless=settings.disable_engagement_in_headless,
         persisted_to_env=persisted_to_env,
     )
 

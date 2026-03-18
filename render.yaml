@@ -12,6 +12,10 @@ services:
         value: "0.0.0.0"
       - key: CORS_ORIGINS
         value: "*"
+      - key: MAX_CONCURRENT_JOBS
+        value: "1"
+      - key: DISABLE_ENGAGEMENT_IN_HEADLESS
+        value: "true"
       - key: MAIL_ADDRESS
         sync: false
       - key: MAIL_PASSWORD

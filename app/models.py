@@ -132,6 +132,8 @@ class RuntimeConfigResponse(BaseModel):
     tm_proxy: str
     headless: bool
     chrome_version: int
+    max_concurrent_jobs: int
+    disable_engagement_in_headless: bool
     persisted_to_env: bool = False
 
 
@@ -147,6 +149,8 @@ class RuntimeConfigUpdateRequest(BaseModel):
     tm_proxy: Optional[str] = None
     headless: Optional[bool] = None
     chrome_version: Optional[int] = None
+    max_concurrent_jobs: Optional[int] = None
+    disable_engagement_in_headless: Optional[bool] = None
     persist_to_env: bool = False
 
 

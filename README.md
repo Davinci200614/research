@@ -106,8 +106,8 @@ This repo includes a ready-to-deploy Render blueprint in `render.yaml`.
 
 Notes:
 - Container deployments run with `HEADLESS=true`.
-- Engagement scraping may be unreliable in fully headless cloud environments;
-  if needed, call `/api/v1/scrape` with `"include_engagement": false`.
+- Engagement scraping is automatically skipped in headless mode when
+  `DISABLE_ENGAGEMENT_IN_HEADLESS=true` (default).
 - Jobs are in-memory only; restarting the service clears old job history.
 
 ---
@@ -218,6 +218,8 @@ See [`.env.example`](.env.example) for the full list.
 | `GOOGLE_SA_JSON`  | —         | Service account JSON path with Sheets access |
 | `CHROME_VERSION`  | `136`     | Must match installed Chrome version          |
 | `HEADLESS`        | `false`   | Run Chrome headless (Soundcharts only)       |
+| `MAX_CONCURRENT_JOBS` | `1`    | Max active scrape jobs allowed at once       |
+| `DISABLE_ENGAGEMENT_IN_HEADLESS` | `true` | Skip engagement phase when HEADLESS is true |
 | `API_HOST`        | `0.0.0.0` | Server bind address                         |
 | `API_PORT`        | `8000`    | Server port                                  |
 | `CORS_ORIGINS`    | `*`       | CORS allowed origins (comma-separated)       |
