@@ -3,6 +3,11 @@ Google Sheets helpers for writing completed job results.
 """
 
 import re
+import base64
+import json
+import os
+from datetime import datetime
+from urllib.parse import urlparse
 from typing import List
 
 import gspread
@@ -55,6 +60,33 @@ def _unique_ws_title(sheet, base_title: str) -> str:
     return f"{base_title[:90]} {str(len(existing) + 1)}"
 
 
+def _format_sheet_date(raw_date: str) -> str:
+    value = str(raw_date or "").strip()
+    if not value:
+        return ""
+
+    # Ticketmaster dates are typically like "Oct 26, 2026"; fall back to original.
+    for fmt in ("%b %d, %Y", "%B %d, %Y", "%m/%d/%Y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt).strftime("%m/%d/%Y")
+        except ValueError:
+            continue
+    return value
+
+
+def _primary_name_from_url(event_url: str) -> str:
+    host = urlparse(str(event_url or "")).netloc.lower()
+    if "ticketmaster" in host:
+        return "Ticketmaster"
+    if "axs" in host:
+        return "AXS"
+    if "seetickets" in host:
+        return "See Tickets"
+    if host:
+        return "Primary"
+    return ""
+
+
 def _create_concerts_sheet(sheet, artist: ArtistData, job_tag: str = "") -> str:
     data = artist.model_dump()
     concerts = data.get("concerts", []) or []
@@ -67,42 +99,40 @@ def _create_concerts_sheet(sheet, artist: ArtistData, job_tag: str = "") -> str:
     title = _unique_ws_title(sheet, _sanitize_ws_title(base))
 
     rows_needed = max(30, len(concerts) + 3)
-    ws = sheet.add_worksheet(title=title, rows=rows_needed, cols=10)
+    ws = sheet.add_worksheet(title=title, rows=rows_needed, cols=6)
 
     ws.update(
         "A1",
         [["TOUR DATES"]],
         value_input_option="RAW",
     )
+    ws.merge_cells("A1:F1")
 
     headers = [
-        "Date",
-        "Day",
-        "Time",
-        "City",
-        "State",
-        "Venue",
-        "Tour / Event",
-        "Presale / Onsale",
-        "Link",
+        "Date (mm/dd/yyyy)",
+        "Day of the Week",
+        "Primary",
+        "Link to Primary",
+        "Venue Name",
+        "Venue Capacity",
     ]
-    ws.update("A2:I2", [headers], value_input_option="RAW")
+    ws.update("A2:F2", [headers], value_input_option="RAW")
 
     if concerts:
         rows = []
         for c in concerts:
+            event_url = str(c.get("event_url", "") or "")
             rows.append([
-                str(c.get("date", "") or ""),
+                _format_sheet_date(str(c.get("date", "") or "")),
                 str(c.get("day", "") or ""),
-                str(c.get("time", "") or ""),
-                str(c.get("city", "") or ""),
-                str(c.get("state", "") or ""),
+                _primary_name_from_url(event_url),
+                event_url,
                 str(c.get("venue", "") or ""),
-                str(c.get("tour_name", "") or ""),
-                str(c.get("presale_info", "") or ""),
-                str(c.get("event_url", "") or ""),
+                str(c.get("venue_capacity", "") or ""),
             ])
-        ws.update(f"A3:I{2 + len(rows)}", rows, value_input_option="RAW")
+        ws.update(f"A3:F{2 + len(rows)}", rows, value_input_option="RAW")
+
+    ws.columns_auto_resize(0, 5)
 
     return f"https://docs.google.com/spreadsheets/d/{settings.sheet_id}/edit#gid={ws.id}"
 
@@ -114,7 +144,49 @@ class SheetSyncError(RuntimeError):
 def _get_client() -> gspread.Client:
     if not settings.google_sa_json:
         raise SheetSyncError("GOOGLE_SA_JSON is not configured")
-    creds = Credentials.from_service_account_file(settings.google_sa_json, scopes=SCOPES)
+
+    raw_value = settings.google_sa_json.strip()
+
+    # 1) Local/dev: GOOGLE_SA_JSON points to a JSON key file.
+    if os.path.isfile(raw_value):
+        creds = Credentials.from_service_account_file(raw_value, scopes=SCOPES)
+        return gspread.authorize(creds)
+
+    # 2) Cloud: GOOGLE_SA_JSON contains raw JSON key content.
+    info = None
+    candidates = [raw_value]
+
+    # Some platforms/users wrap the JSON secret in outer quotes.
+    if len(raw_value) >= 2 and raw_value[0] == raw_value[-1] and raw_value[0] in {'"', "'"}:
+        candidates.append(raw_value[1:-1])
+
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                info = parsed
+                break
+        except json.JSONDecodeError:
+            continue
+
+    # 3) Cloud alternative: GOOGLE_SA_JSON contains base64-encoded JSON.
+    if info is None:
+        for candidate in candidates:
+            try:
+                decoded = base64.b64decode(candidate).decode("utf-8")
+                parsed = json.loads(decoded)
+                if isinstance(parsed, dict):
+                    info = parsed
+                    break
+            except Exception:
+                continue
+
+    if info is None:
+        raise SheetSyncError(
+            "GOOGLE_SA_JSON must be a valid file path, JSON string, or base64-encoded JSON"
+        )
+
+    creds = Credentials.from_service_account_info(info, scopes=SCOPES)
     return gspread.authorize(creds)
 
 

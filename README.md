@@ -215,7 +215,9 @@ See [`.env.example`](.env.example) for the full list.
 | `OPENAI_API_KEY`  | —         | OpenAI API key for web search                |
 | `SHEET_ID`        | —         | Google Sheet ID used by sync endpoint        |
 | `WORKSHEET_NAME`  | `Sheet1`  | Worksheet/tab name to append rows to         |
-| `GOOGLE_SA_JSON`  | —         | Service account JSON path with Sheets access |
+| `GOOGLE_SA_JSON`  | —         | Service account credentials: file path, raw JSON, or base64 JSON |
+
+For cloud secrets (Render), paste the JSON object directly as the value for `GOOGLE_SA_JSON` without adding extra outer quotes.
 | `CHROME_VERSION`  | `136`     | Must match installed Chrome version          |
 | `HEADLESS`        | `false`   | Run Chrome headless (Soundcharts only)       |
 | `MAX_CONCURRENT_JOBS` | `1`    | Max active scrape jobs allowed at once       |
