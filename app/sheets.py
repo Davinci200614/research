@@ -208,7 +208,7 @@ def _result_to_row(artist: ArtistData, headers: List[str], event_sheet_url: str 
         "eventsheet": event_sheet_url,
         "venuetype": data.get("venue_type", ""),
         "linktotour": data.get("tour_link", ""),
-        "ticketagenttour": data.get("tm_profile_url", ""),
+        "ticketagenttourlink": data.get("tm_profile_url", ""),
         "gasection": "",
         "teammember": "",
         "prereportscompleted": "",
