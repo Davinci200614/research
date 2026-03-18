@@ -812,10 +812,13 @@ def get_engagement_rate(
 def _make_uc_driver(ver: int, headless: bool = False) -> uc.Chrome:
     """Create a new undetected-chromedriver instance.
 
-    Always runs **headed** because Chrome 115+ headless/off-screen modes
-    crash on cross-origin iframe renderer access.  The window is minimised
-    immediately after creation so it stays out of the way.
+    In server/container environments (no display), forces headless mode.
+    If headed startup fails, retries once in headless mode.
     """
+    force_headless = headless
+    if platform.system() == "Linux" and not os.getenv("DISPLAY"):
+        force_headless = True
+
     opts = uc.ChromeOptions()
     opts.add_argument("--window-size=1920,1080")
     opts.add_argument("--disable-gpu")
@@ -827,14 +830,36 @@ def _make_uc_driver(ver: int, headless: bool = False) -> uc.Chrome:
     opts.add_argument("--mute-audio")
     opts.add_argument("--disable-features=IsolateOrigins,site-per-process")
     opts.add_argument("--disable-site-isolation-trials")
+
+    if force_headless:
+        opts.add_argument("--headless=new")
+        opts.add_argument("--disable-software-rasterizer")
+
     kw: dict = {"options": opts}
     if ver:
         kw["version_main"] = ver
-    driver = uc.Chrome(**kw)
+
     try:
-        driver.minimize_window()
-    except Exception:
-        pass
+        driver = uc.Chrome(**kw)
+    except Exception as exc:
+        if not force_headless:
+            logger.warning(
+                "Headed Chrome startup failed (%s); retrying headless for engagement",
+                exc,
+            )
+            opts.add_argument("--headless=new")
+            opts.add_argument("--disable-software-rasterizer")
+            driver = uc.Chrome(**kw)
+            force_headless = True
+        else:
+            raise
+
+    if not force_headless:
+        try:
+            driver.minimize_window()
+        except Exception:
+            pass
+
     return driver
 
 

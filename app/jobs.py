@@ -355,15 +355,10 @@ class JobManager:
                         self._touch(job)
 
                         try:
-                            # Engagement must always run headed (headless=False).
-                            # Chrome 115+ headless uses OOP iframes for cross-origin
-                            # frames; WebDriver cannot reach the reCAPTCHA bframe
-                            # renderer process in that mode. HEADLESS setting only
-                            # applies to the Soundcharts phase (see README).
                             er_results = get_engagement_rate_batch(
                                 list(ig_map.keys()),
                                 chrome_version=settings.chrome_version,
-                                headless=False,
+                                headless=settings.headless,
                             )
                             for username, er in er_results.items():
                                 if er:
