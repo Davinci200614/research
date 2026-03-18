@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     cors_origins: str = "*"
     max_concurrent_jobs: int = 1
     disable_engagement_in_headless: bool = True
+    redis_url: str = ""
+    job_retention_hours: int = 24
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 

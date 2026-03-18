@@ -49,6 +49,8 @@ _ENV_KEY_MAP = {
     "chrome_version": "CHROME_VERSION",
     "max_concurrent_jobs": "MAX_CONCURRENT_JOBS",
     "disable_engagement_in_headless": "DISABLE_ENGAGEMENT_IN_HEADLESS",
+    "redis_url": "REDIS_URL",
+    "job_retention_hours": "JOB_RETENTION_HOURS",
 }
 
 # ── Logging ──────────────────────────────────────────────────────────────────
@@ -269,6 +271,8 @@ def _settings_to_response(persisted_to_env: bool = False) -> RuntimeConfigRespon
         chrome_version=settings.chrome_version,
         max_concurrent_jobs=settings.max_concurrent_jobs,
         disable_engagement_in_headless=settings.disable_engagement_in_headless,
+        redis_url_set=bool(settings.redis_url),
+        job_retention_hours=settings.job_retention_hours,
         persisted_to_env=persisted_to_env,
     )
 

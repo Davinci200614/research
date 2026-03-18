@@ -134,6 +134,8 @@ class RuntimeConfigResponse(BaseModel):
     chrome_version: int
     max_concurrent_jobs: int
     disable_engagement_in_headless: bool
+    redis_url_set: bool
+    job_retention_hours: int
     persisted_to_env: bool = False
 
 
@@ -151,6 +153,8 @@ class RuntimeConfigUpdateRequest(BaseModel):
     chrome_version: Optional[int] = None
     max_concurrent_jobs: Optional[int] = None
     disable_engagement_in_headless: Optional[bool] = None
+    redis_url: Optional[str] = None
+    job_retention_hours: Optional[int] = None
     persist_to_env: bool = False
 
 

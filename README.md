@@ -220,6 +220,8 @@ See [`.env.example`](.env.example) for the full list.
 | `HEADLESS`        | `false`   | Run Chrome headless (Soundcharts only)       |
 | `MAX_CONCURRENT_JOBS` | `1`    | Max active scrape jobs allowed at once       |
 | `DISABLE_ENGAGEMENT_IN_HEADLESS` | `true` | Skip engagement phase when HEADLESS is true |
+| `REDIS_URL`       | —         | Redis connection URL for shared job state     |
+| `JOB_RETENTION_HOURS` | `24`   | How long to keep jobs in Redis                |
 | `API_HOST`        | `0.0.0.0` | Server bind address                         |
 | `API_PORT`        | `8000`    | Server port                                  |
 | `CORS_ORIGINS`    | `*`       | CORS allowed origins (comma-separated)       |
@@ -237,8 +239,9 @@ See [`.env.example`](.env.example) for the full list.
    - Poll `GET /api/v1/jobs/{job_id}` every few seconds
    - Render results when `status == "completed"`
 
-3. **Job store is in-memory.** Jobs are lost on restart. For persistence,
-   swap `JobManager` for Celery + Redis (see `app/jobs.py` docstring).
+3. **Job store can be Redis-backed.**
+  - Without `REDIS_URL`: jobs are in-memory only (lost on restart, not shared across instances).
+  - With `REDIS_URL`: job status/results are shared across instances and retained for `JOB_RETENTION_HOURS`.
 
 4. **Browser instances:** Phase 1 (Soundcharts) uses standard Selenium.
    Phase 4 (engagement) uses `undetected-chromedriver` with a visible

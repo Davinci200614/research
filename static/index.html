@@ -134,13 +134,38 @@
       border: 1px solid var(--border);
     }
     #status-bar.visible { display: flex; }
-    .spinner {
-      width: 16px; height: 16px; flex-shrink: 0;
+    .status-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 700;
+    }
+    #status-bar[data-state="running"] .status-icon,
+    #status-bar[data-state="queued"] .status-icon {
       border: 2.5px solid var(--border);
       border-top-color: var(--accent);
-      border-radius: 50%;
       animation: spin .7s linear infinite;
     }
+    #status-bar[data-state="success"] .status-icon {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid rgba(22,163,74,.25);
+      animation: none;
+    }
+    #status-bar[data-state="success"] .status-icon::before { content: '✓'; }
+    #status-bar[data-state="error"] .status-icon {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid rgba(220,38,38,.25);
+      animation: none;
+    }
+    #status-bar[data-state="error"] .status-icon::before { content: '!'; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .progress-bar-track {
@@ -188,9 +213,29 @@
       border-color: var(--accent); background: var(--accent-light);
       box-shadow: var(--shadow-sm);
     }
+    .job-item.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      box-shadow: var(--shadow-sm);
+    }
     .job-top { display: flex; justify-content: space-between; align-items: center; }
     .job-id { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: .84rem; color: var(--text); }
     .job-meta { font-size: .79rem; color: var(--muted); margin-top: .35rem; }
+    .job-actions {
+      margin-top: .55rem;
+      display: flex;
+      gap: .45rem;
+      flex-wrap: wrap;
+    }
+    .job-actions .outline-btn {
+      font-size: .75rem;
+      padding: .25rem .65rem;
+    }
+    .jobs-summary {
+      margin-top: .45rem;
+      color: var(--muted);
+      font-size: .78rem;
+    }
 
     /* ── Results table ────────────────────────────────────────── */
     #results-section { display: none; }
@@ -427,7 +472,7 @@
         Start Research
       </button>
       <div id="status-bar">
-        <div class="spinner"></div>
+        <div class="status-icon"></div>
         <span id="status-text">Starting…</span>
         <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
         <span id="progress-pct">0%</span>
@@ -440,6 +485,7 @@
         <h2>Jobs</h2>
         <button onclick="refreshJobs()">Refresh</button>
       </div>
+      <div id="jobs-summary" class="jobs-summary"></div>
       <div id="jobs-list"></div>
     </div>
 
@@ -590,7 +636,7 @@
 
       const btn = document.getElementById('start-btn');
       btn.disabled = true;
-      showStatus('Submitting…', 0);
+      showStatus('Submitting…', 0, 'queued');
 
       try {
         const res = await fetch(`${API}/scrape`, {
@@ -608,11 +654,11 @@
         }
         const data = await res.json();
         activeJobId = data.job_id;
-        showStatus(`Job ${data.job_id} queued — polling…`, 0);
+        showStatus(`Job ${data.job_id} queued — polling…`, 0, 'queued');
         startPolling(data.job_id);
         refreshJobs();
       } catch (e) {
-        showStatus(`Error: ${e.message}`, 0);
+        showStatus(`Error: ${e.message}`, 0, 'error');
         btn.disabled = false;
       }
     }
@@ -644,7 +690,7 @@
             notFoundStreak = 0;
             if (recovered.status === 'completed') {
               stopPolling();
-              showStatus(`Done — ${recovered.progress.completed_artists} artist(s) researched`, 100);
+              showStatus(`Done — ${recovered.progress.completed_artists} artist(s) researched`, 100, 'success');
               document.getElementById('start-btn').disabled = false;
               showResults(recovered);
               refreshJobs();
@@ -652,7 +698,7 @@
             }
             if (recovered.status === 'failed') {
               stopPolling();
-              showStatus(`Failed: ${recovered.error || 'Unknown error'}`, 0);
+              showStatus(`Failed: ${recovered.error || 'Unknown error'}`, 0, 'error');
               document.getElementById('start-btn').disabled = false;
               refreshJobs();
               return;
@@ -660,19 +706,19 @@
 
             const p = recovered.progress;
             const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
-            showStatus(`Reconnected to job ${jobId}…`, pct);
+            showStatus(`Reconnected to job ${jobId}…`, pct, 'running');
             refreshJobs();
             return;
           }
 
           if (notFoundStreak < 4) {
-            showStatus(`Waiting for job ${jobId}… retry ${notFoundStreak}/3`, 0);
+            showStatus(`Waiting for job ${jobId}… retry ${notFoundStreak}/3`, 0, 'queued');
             refreshJobs();
             return;
           }
 
           stopPolling();
-          showStatus('Job no longer exists (server restarted or rescheduled). Please start a new job.', 0);
+          showStatus('Job no longer exists (server restarted or rescheduled). Please start a new job.', 0, 'error');
           document.getElementById('start-btn').disabled = false;
           refreshJobs();
           return;
@@ -687,23 +733,24 @@
           const step = p.current_step ? ` (${p.current_step})` : '';
           showStatus(
             `Researching ${p.current_artist || '…'}${step}  —  ${p.completed_artists}/${p.total_artists}`,
-            pct
+            pct,
+            'running'
           );
         } else if (job.status === 'completed') {
           stopPolling();
-          showStatus(`Done — ${p.completed_artists} artist(s) researched`, 100);
+          showStatus(`Done — ${p.completed_artists} artist(s) researched`, 100, 'success');
           document.getElementById('start-btn').disabled = false;
           showResults(job);
           refreshJobs();
         } else if (job.status === 'failed') {
           stopPolling();
-          showStatus(`Failed: ${job.error || 'Unknown error'}`, pct);
+          showStatus(`Failed: ${job.error || 'Unknown error'}`, pct, 'error');
           document.getElementById('start-btn').disabled = false;
           refreshJobs();
         }
       } catch (e) {
         stopPolling();
-        showStatus(`Poll error: ${e.message}`, 0);
+        showStatus(`Poll error: ${e.message}`, 0, 'error');
         document.getElementById('start-btn').disabled = false;
       }
     }
@@ -713,31 +760,64 @@
     }
 
     // ── Status bar helpers ───────────────────────────────────
-    function showStatus(text, pct) {
+    function showStatus(text, pct, state = 'running') {
       const bar = document.getElementById('status-bar');
       bar.classList.add('visible');
+      bar.dataset.state = state;
       document.getElementById('status-text').textContent = text;
       document.getElementById('progress-fill').style.width = pct + '%';
       document.getElementById('progress-pct').textContent = pct + '%';
     }
 
     // ── Jobs list ────────────────────────────────────────────
+    function jobPriority(status) {
+      if (status === 'running') return 0;
+      if (status === 'queued') return 1;
+      if (status === 'failed') return 2;
+      return 3; // completed
+    }
+
+    function sortJobs(jobs) {
+      return [...jobs].sort((a, b) => {
+        const pa = jobPriority(a.status);
+        const pb = jobPriority(b.status);
+        if (pa !== pb) return pa - pb;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+    }
+
+    function renderJobSummary(jobs) {
+      const summary = document.getElementById('jobs-summary');
+      const running = jobs.filter(j => j.status === 'running').length;
+      const queued = jobs.filter(j => j.status === 'queued').length;
+      const completed = jobs.filter(j => j.status === 'completed').length;
+      const failed = jobs.filter(j => j.status === 'failed').length;
+      summary.textContent = `${jobs.length} total • ${running} running • ${queued} queued • ${completed} completed • ${failed} failed`;
+    }
+
     async function refreshJobs() {
       try {
         const res = await fetch(`${API}/jobs`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const jobs = await res.json();
         const sec = document.getElementById('jobs-section');
         const list = document.getElementById('jobs-list');
+        const ordered = sortJobs(jobs);
 
-        if (!jobs.length) { sec.classList.remove('visible'); return; }
+        if (!ordered.length) { sec.classList.remove('visible'); return; }
         sec.classList.add('visible');
+        renderJobSummary(ordered);
 
-        list.innerHTML = jobs.map(j => {
+        list.innerHTML = ordered.map(j => {
           const p = j.progress;
           const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
-          const time = new Date(j.created_at).toLocaleTimeString();
+          const time = new Date(j.created_at).toLocaleString();
+          const isActive = activeJobId && activeJobId === j.job_id;
+          const step = p.current_step ? ` • ${esc(p.current_step)}` : '';
+          const artist = p.current_artist ? ` • ${esc(p.current_artist)}` : '';
+          const actionText = j.status === 'completed' ? 'View Results' : (j.status === 'failed' ? 'View Error' : 'Watch');
           return `
-            <div class="job-item" onclick="viewJob('${j.job_id}')">
+            <div class="job-item ${isActive ? 'active' : ''}" onclick="viewJob('${j.job_id}')">
               <div class="job-top">
                 <span class="job-id">${j.job_id}</span>
                 <span class="badge badge-${j.status}">${j.status}</span>
@@ -745,27 +825,45 @@
               <div class="job-meta">
                 ${p.total_artists} artist(s) &middot;
                 ${p.completed_artists} done (${pct}%) &middot;
-                ${time}
+                ${time}${step}${artist}
                 ${j.error ? ' &middot; <span style="color:var(--red)">' + esc(j.error) + '</span>' : ''}
+              </div>
+              <div class="job-actions">
+                <button class="outline-btn" onclick="event.stopPropagation(); viewJob('${j.job_id}')">${actionText}</button>
               </div>
             </div>`;
         }).join('');
-      } catch (_) {}
+      } catch (e) {
+        const sec = document.getElementById('jobs-section');
+        sec.classList.add('visible');
+        document.getElementById('jobs-summary').textContent = 'Could not load jobs.';
+        document.getElementById('jobs-list').innerHTML = `<div class="error-msg">${esc(e.message || 'Unknown jobs error')}</div>`;
+      }
     }
 
     async function viewJob(jobId) {
       try {
         const res = await fetch(`${API}/jobs/${jobId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const job = await res.json();
+        activeJobId = jobId;
+        refreshJobs();
         if (job.status === 'completed') showResults(job);
-        else if (job.status === 'running') {
-          activeJobId = jobId;
+        else if (job.status === 'running' || job.status === 'queued') {
           const p = job.progress;
           const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
-          showStatus(`Watching job ${jobId}…`, pct);
+          showStatus(`Watching job ${jobId}…`, pct, 'running');
           startPolling(jobId);
+        } else if (job.status === 'failed') {
+          showStatus(`Failed: ${job.error || 'Unknown error'}`, 0, 'error');
+          document.getElementById('results-section').classList.add('visible');
+          document.getElementById('results-title').textContent = `Job ${jobId} Error`;
+          document.getElementById('results-body').innerHTML = `<div class="error-msg">${esc(job.error || 'Unknown error')}</div>`;
+          document.getElementById('sync-sheet-btn').disabled = true;
         }
-      } catch (_) {}
+      } catch (e) {
+        showStatus(`Could not open job ${jobId}: ${e.message}`, 0, 'error');
+      }
     }
 
     // ── Results ──────────────────────────────────────────────

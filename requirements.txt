@@ -19,3 +19,4 @@ pydantic-settings
 requests
 gspread
 google-auth
+redis
