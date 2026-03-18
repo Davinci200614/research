@@ -463,6 +463,7 @@
     const API = '/api/v1';
     let activePolling = null;    // interval id
     let activeJobId   = null;
+    let notFoundStreak = 0;
     let settingsLoaded = false;
 
     async function toggleSettings() {
@@ -597,7 +598,14 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          let detail = `HTTP ${res.status}`;
+          try {
+            const err = await res.json();
+            detail = err.detail || detail;
+          } catch (_) {}
+          throw new Error(detail);
+        }
         const data = await res.json();
         activeJobId = data.job_id;
         showStatus(`Job ${data.job_id} queued — polling…`, 0);
@@ -612,20 +620,65 @@
     // ── Poll job ─────────────────────────────────────────────
     function startPolling(jobId) {
       if (activePolling) clearInterval(activePolling);
+      notFoundStreak = 0;
       activePolling = setInterval(() => pollJob(jobId), 2000);
+    }
+
+    async function tryRecoverJob(jobId) {
+      const res = await fetch(`${API}/jobs`);
+      if (!res.ok) return null;
+      const jobs = await res.json();
+      return jobs.find(j => j.job_id === jobId) || null;
     }
 
     async function pollJob(jobId) {
       try {
         const res = await fetch(`${API}/jobs/${jobId}`);
         if (res.status === 404) {
+          notFoundStreak += 1;
+
+          // In cloud environments, transient 404s can happen during restarts
+          // or when requests briefly hit another instance.
+          const recovered = await tryRecoverJob(jobId);
+          if (recovered) {
+            notFoundStreak = 0;
+            if (recovered.status === 'completed') {
+              stopPolling();
+              showStatus(`Done — ${recovered.progress.completed_artists} artist(s) researched`, 100);
+              document.getElementById('start-btn').disabled = false;
+              showResults(recovered);
+              refreshJobs();
+              return;
+            }
+            if (recovered.status === 'failed') {
+              stopPolling();
+              showStatus(`Failed: ${recovered.error || 'Unknown error'}`, 0);
+              document.getElementById('start-btn').disabled = false;
+              refreshJobs();
+              return;
+            }
+
+            const p = recovered.progress;
+            const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
+            showStatus(`Reconnected to job ${jobId}…`, pct);
+            refreshJobs();
+            return;
+          }
+
+          if (notFoundStreak < 4) {
+            showStatus(`Waiting for job ${jobId}… retry ${notFoundStreak}/3`, 0);
+            refreshJobs();
+            return;
+          }
+
           stopPolling();
-          showStatus('Job no longer exists (server restarted). Please start a new job.', 0);
+          showStatus('Job no longer exists (server restarted or rescheduled). Please start a new job.', 0);
           document.getElementById('start-btn').disabled = false;
           refreshJobs();
           return;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        notFoundStreak = 0;
         const job = await res.json();
         const p = job.progress;
         const pct = p.total_artists ? Math.round((p.completed_artists / p.total_artists) * 100) : 0;
