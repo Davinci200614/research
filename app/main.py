@@ -26,32 +26,12 @@ from .models import (
     ArtistData,
     HealthResponse,
     JobResponse,
-    RuntimeConfigResponse,
-    RuntimeConfigUpdateRequest,
     SheetSyncResponse,
     JobStatus,
     ScrapeRequest,
     ScrapeStartResponse,
 )
 from .sheets import SheetSyncError, append_results, get_sheet_url
-
-_ENV_KEY_MAP = {
-    "mail_address": "MAIL_ADDRESS",
-    "mail_password": "MAIL_PASSWORD",
-    "mail_address1": "MAIL_ADDRESS1",
-    "mail_password1": "MAIL_PASSWORD1",
-    "openai_api_key": "OPENAI_API_KEY",
-    "sheet_id": "SHEET_ID",
-    "worksheet_name": "WORKSHEET_NAME",
-    "google_sa_json": "GOOGLE_SA_JSON",
-    "tm_proxy": "TM_PROXY",
-    "headless": "HEADLESS",
-    "chrome_version": "CHROME_VERSION",
-    "max_concurrent_jobs": "MAX_CONCURRENT_JOBS",
-    "disable_engagement_in_headless": "DISABLE_ENGAGEMENT_IN_HEADLESS",
-    "redis_url": "REDIS_URL",
-    "job_retention_hours": "JOB_RETENTION_HOURS",
-}
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 
@@ -163,26 +143,6 @@ def start_scrape(body: ScrapeRequest):
     )
 
 
-@app.get("/api/v1/settings", response_model=RuntimeConfigResponse, tags=["Settings"])
-def get_runtime_settings():
-    """Get runtime configuration used by new jobs."""
-    return _settings_to_response()
-
-
-@app.put("/api/v1/settings", response_model=RuntimeConfigResponse, tags=["Settings"])
-def update_runtime_settings(body: RuntimeConfigUpdateRequest):
-    """Update runtime configuration without editing .env file."""
-    payload = body.model_dump(exclude_unset=True)
-    persist_to_env = bool(payload.pop("persist_to_env", False))
-    for key, value in payload.items():
-        setattr(settings, key, value)
-
-    if persist_to_env and payload:
-        _persist_settings_to_env(payload)
-
-    return _settings_to_response(persisted_to_env=persist_to_env)
-
-
 @app.get("/api/v1/jobs", response_model=List[JobResponse], tags=["Jobs"])
 def list_jobs():
     """List all jobs (newest first)."""
@@ -254,53 +214,3 @@ def _job_to_response(job) -> JobResponse:
     )
 
 
-def _settings_to_response(persisted_to_env: bool = False) -> RuntimeConfigResponse:
-    return RuntimeConfigResponse(
-        mail_address=settings.mail_address,
-        mail_address1=settings.mail_address1,
-        openai_api_key_set=bool(settings.openai_api_key),
-        mail_password_set=bool(settings.mail_password),
-        mail_password1_set=bool(settings.mail_password1),
-        sheet_id=settings.sheet_id,
-        worksheet_name=settings.worksheet_name,
-        google_sa_json=settings.google_sa_json,
-        google_sa_json_set=bool(settings.google_sa_json),
-        tm_proxy_set=bool(settings.tm_proxy),
-        tm_proxy=settings.tm_proxy,
-        headless=settings.headless,
-        chrome_version=settings.chrome_version,
-        max_concurrent_jobs=settings.max_concurrent_jobs,
-        disable_engagement_in_headless=settings.disable_engagement_in_headless,
-        redis_url_set=bool(settings.redis_url),
-        job_retention_hours=settings.job_retention_hours,
-        persisted_to_env=persisted_to_env,
-    )
-
-
-def _persist_settings_to_env(updates: dict) -> None:
-    env_path = Path(__file__).resolve().parent.parent / ".env"
-    lines = []
-    if env_path.exists():
-        lines = env_path.read_text(encoding="utf-8").splitlines()
-
-    for key, value in updates.items():
-        env_key = _ENV_KEY_MAP.get(key)
-        if not env_key:
-            continue
-
-        if isinstance(value, bool):
-            val_str = "true" if value else "false"
-        else:
-            val_str = str(value)
-
-        new_line = f"{env_key}={val_str}"
-        replaced = False
-        for i, line in enumerate(lines):
-            if line.strip().startswith(f"{env_key}="):
-                lines[i] = new_line
-                replaced = True
-                break
-        if not replaced:
-            lines.append(new_line)
-
-    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")

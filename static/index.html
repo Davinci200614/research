@@ -49,14 +49,6 @@
     }
     header p { color: var(--muted); font-size: .92rem; margin-top: .4rem; font-weight: 400; }
 
-    .floating-settings-btn {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 1101;
-      box-shadow: var(--shadow-sm);
-    }
-
     /* ── Card ─────────────────────────────────────────────────── */
     .card {
       background: var(--surface);
@@ -302,160 +294,22 @@
       font-size: .87rem; margin-top: .75rem; font-weight: 500;
     }
 
-    .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: .8rem;
-      margin-top: .25rem;
-    }
-    .field { display: flex; flex-direction: column; gap: .35rem; }
-    .field.full { grid-column: 1 / -1; }
-    .field label {
-      color: var(--muted);
-      font-size: .78rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-    .field input {
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: .65rem .8rem;
-      font-size: .87rem;
-      font-family: inherit;
-      color: var(--text);
-    }
-    .field input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(99,102,241,.12);
-    }
-    .settings-actions {
-      display: flex;
-      align-items: center;
-      gap: .6rem;
-      margin-top: .9rem;
-      flex-wrap: wrap;
-    }
-    .switch {
-      display: inline-flex;
-      align-items: center;
-      gap: .4rem;
-      color: var(--muted);
-      font-size: .85rem;
-      padding: .35rem .55rem;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg);
-    }
-    .switch input[type='checkbox'] {
-      width: 15px;
-      height: 15px;
-      accent-color: var(--accent);
-    }
-
-    #settings-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(18, 20, 33, .35);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s ease;
-      z-index: 1090;
-    }
-    #settings-backdrop.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    #settings-card {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: min(440px, 96vw);
-      height: 100vh;
-      margin: 0;
-      border-radius: 0;
-      border-left: 1px solid var(--border);
-      border-right: none;
-      border-top: none;
-      border-bottom: none;
-      overflow-y: auto;
-      z-index: 1100;
-      transform: translateX(104%);
-      transition: transform .25s ease;
-      box-shadow: -10px 0 28px rgba(0, 0, 0, .08);
-    }
-    #settings-card.visible { transform: translateX(0); }
-
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 640px) {
       .wrapper { padding: 1.5rem 1rem; }
       .options { flex-direction: column; gap: .6rem; }
       .card { padding: 1.25rem; }
       .results-top { flex-direction: column; align-items: flex-start; }
-      .settings-grid { grid-template-columns: 1fr; }
-      .floating-settings-btn { top: .75rem; right: .75rem; }
-      #settings-card { width: 100vw; }
     }
   </style>
 </head>
 <body>
-  <button class="outline-btn floating-settings-btn" id="toggle-settings-btn" onclick="toggleSettings()">Credentials</button>
-  <div id="settings-backdrop" onclick="closeSettings()"></div>
-
   <div class="wrapper">
     <!-- ── Header ────────────────────────────────────────────── -->
     <header>
       <h1>Artist Research</h1>
       <p>Search artists on Soundcharts &middot; Engagement rates &middot; Tour links &middot; Venue types &middot; Ticketmaster concerts</p>
     </header>
-
-    <div class="card" id="settings-card">
-      <h2>Credentials & Runtime Settings</h2>
-      <div class="settings-grid">
-        <div class="field">
-          <label for="cfg-mail-address">Soundcharts Email</label>
-          <input id="cfg-mail-address" type="email" placeholder="you@example.com" />
-        </div>
-        <div class="field">
-          <label for="cfg-mail-password">Soundcharts Password</label>
-          <input id="cfg-mail-password" type="password" placeholder="Leave blank to keep current" />
-        </div>
-        <div class="field">
-          <label for="cfg-openai-key">OpenAI API Key</label>
-          <input id="cfg-openai-key" type="password" placeholder="sk-... (leave blank to keep current)" />
-        </div>
-        <div class="field">
-          <label for="cfg-chrome-version">Chrome Version</label>
-          <input id="cfg-chrome-version" type="number" min="0" step="1" placeholder="145" />
-        </div>
-        <div class="field">
-          <label for="cfg-sheet-id">Google Sheet ID</label>
-          <input id="cfg-sheet-id" type="text" placeholder="Sheet ID" />
-        </div>
-        <div class="field">
-          <label for="cfg-worksheet-name">Worksheet Name</label>
-          <input id="cfg-worksheet-name" type="text" placeholder="Sheet1" />
-        </div>
-        <div class="field full">
-          <label for="cfg-sa-json">Google Service Account JSON Path</label>
-          <input id="cfg-sa-json" type="text" placeholder="C:/path/to/service-account.json" />
-        </div>
-        <div class="field full">
-          <label for="cfg-tm-proxy">Ticketmaster Proxy (optional)</label>
-          <input id="cfg-tm-proxy" type="text" placeholder="ip:port OR ip:port:user:pass" />
-        </div>
-      </div>
-      <div class="settings-actions">
-        <label class="switch"><input id="cfg-headless" type="checkbox" /> Headless Soundcharts</label>
-        <label class="switch"><input id="cfg-persist-env" type="checkbox" checked /> Persist to .env</label>
-        <button class="outline-btn" id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
-        <button class="outline-btn" onclick="loadSettings(true)">Refresh</button>
-      </div>
-      <div id="settings-feedback" class="feedback" style="margin-top:.9rem;"></div>
-    </div>
 
     <!-- ── Input form ────────────────────────────────────────── -->
     <div class="card" id="form-card">
@@ -510,111 +364,6 @@
     let activePolling = null;    // interval id
     let activeJobId   = null;
     let notFoundStreak = 0;
-    let settingsLoaded = false;
-
-    async function toggleSettings() {
-      const card = document.getElementById('settings-card');
-      const backdrop = document.getElementById('settings-backdrop');
-      const btn = document.getElementById('toggle-settings-btn');
-      const show = !card.classList.contains('visible');
-      card.classList.toggle('visible', show);
-      backdrop.classList.toggle('visible', show);
-      btn.textContent = show ? 'Close Panel' : 'Credentials';
-
-      if (show && !settingsLoaded) {
-        await loadSettings();
-        settingsLoaded = true;
-      }
-    }
-
-    function closeSettings() {
-      const card = document.getElementById('settings-card');
-      const backdrop = document.getElementById('settings-backdrop');
-      const btn = document.getElementById('toggle-settings-btn');
-      card.classList.remove('visible');
-      backdrop.classList.remove('visible');
-      btn.textContent = 'Credentials';
-    }
-
-    function setSettingsFeedback(text, kind = 'success') {
-      const box = document.getElementById('settings-feedback');
-      if (!text) {
-        box.className = 'feedback';
-        box.textContent = '';
-        return;
-      }
-      box.className = `feedback visible ${kind}`;
-      box.textContent = text;
-    }
-
-    async function loadSettings(showToast = false) {
-      try {
-        const res = await fetch(`${API}/settings`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const cfg = await res.json();
-
-        document.getElementById('cfg-mail-address').value = cfg.mail_address || '';
-        document.getElementById('cfg-sheet-id').value = cfg.sheet_id || '';
-        document.getElementById('cfg-worksheet-name').value = cfg.worksheet_name || '';
-        document.getElementById('cfg-sa-json').value = cfg.google_sa_json || '';
-        document.getElementById('cfg-tm-proxy').value = cfg.tm_proxy || '';
-        document.getElementById('cfg-headless').checked = !!cfg.headless;
-        document.getElementById('cfg-chrome-version').value = cfg.chrome_version ?? 0;
-
-        const passInput = document.getElementById('cfg-mail-password');
-        passInput.value = '';
-        passInput.placeholder = cfg.mail_password_set ? 'Saved (leave blank to keep current)' : 'Enter Soundcharts password';
-
-        const keyInput = document.getElementById('cfg-openai-key');
-        keyInput.value = '';
-        keyInput.placeholder = cfg.openai_api_key_set ? 'Saved (leave blank to keep current)' : 'Enter OpenAI API key';
-
-        if (showToast) setSettingsFeedback('Settings reloaded.', 'success');
-      } catch (e) {
-        setSettingsFeedback(`Could not load settings: ${e.message}`, 'error');
-      }
-    }
-
-    async function saveSettings() {
-      const btn = document.getElementById('save-settings-btn');
-      btn.disabled = true;
-      setSettingsFeedback('Saving settings...', 'success');
-
-      const body = {
-        mail_address: document.getElementById('cfg-mail-address').value.trim(),
-        sheet_id: document.getElementById('cfg-sheet-id').value.trim(),
-        worksheet_name: document.getElementById('cfg-worksheet-name').value.trim() || 'Sheet1',
-        google_sa_json: document.getElementById('cfg-sa-json').value.trim(),
-        tm_proxy: document.getElementById('cfg-tm-proxy').value.trim(),
-        headless: document.getElementById('cfg-headless').checked,
-        chrome_version: Number(document.getElementById('cfg-chrome-version').value || 0),
-        persist_to_env: document.getElementById('cfg-persist-env').checked,
-      };
-
-      const pass = document.getElementById('cfg-mail-password').value.trim();
-      if (pass) body.mail_password = pass;
-
-      const openai = document.getElementById('cfg-openai-key').value.trim();
-      if (openai) body.openai_api_key = openai;
-
-      try {
-        const res = await fetch(`${API}/settings`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
-        const persistedMsg = data.persisted_to_env ? ' Persisted to .env.' : ' Runtime only.';
-        setSettingsFeedback(`Settings saved.${persistedMsg} New jobs will use updated credentials.`, 'success');
-        document.getElementById('cfg-mail-password').value = '';
-        document.getElementById('cfg-openai-key').value = '';
-      } catch (e) {
-        setSettingsFeedback(`Save failed: ${e.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-      }
-    }
 
     // ── Start job ────────────────────────────────────────────
     async function startJob() {

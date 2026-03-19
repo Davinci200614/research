@@ -118,46 +118,6 @@ class SheetSyncResponse(BaseModel):
     message: str
 
 
-class RuntimeConfigResponse(BaseModel):
-    mail_address: str
-    mail_address1: str
-    openai_api_key_set: bool
-    mail_password_set: bool
-    mail_password1_set: bool
-    sheet_id: str
-    worksheet_name: str
-    google_sa_json: str
-    google_sa_json_set: bool
-    tm_proxy_set: bool
-    tm_proxy: str
-    headless: bool
-    chrome_version: int
-    max_concurrent_jobs: int
-    disable_engagement_in_headless: bool
-    redis_url_set: bool
-    job_retention_hours: int
-    persisted_to_env: bool = False
-
-
-class RuntimeConfigUpdateRequest(BaseModel):
-    mail_address: Optional[str] = None
-    mail_password: Optional[str] = None
-    mail_address1: Optional[str] = None
-    mail_password1: Optional[str] = None
-    openai_api_key: Optional[str] = None
-    sheet_id: Optional[str] = None
-    worksheet_name: Optional[str] = None
-    google_sa_json: Optional[str] = None
-    tm_proxy: Optional[str] = None
-    headless: Optional[bool] = None
-    chrome_version: Optional[int] = None
-    max_concurrent_jobs: Optional[int] = None
-    disable_engagement_in_headless: Optional[bool] = None
-    redis_url: Optional[str] = None
-    job_retention_hours: Optional[int] = None
-    persist_to_env: bool = False
-
-
 class HealthResponse(BaseModel):
     status: str
     version: str
